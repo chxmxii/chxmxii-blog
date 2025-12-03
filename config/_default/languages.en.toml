@@ -12,7 +12,7 @@ title = "chxmxii_"
   logo = "img/logo.png"
   secondaryLogo = "img/mor.jpg"
   description = "a wealth of information"
-  copyright = "©️ 2024 chxmxii All Rights Reserved"
+  copyright = "©️ 2026 w/luv chxmxii - All Rights Reserved"
 
 [params.author]
     name = "MOUHIB CHVMSI"
@@ -57,7 +57,7 @@ title = "chxmxii_"
 #     { slack = "https://workspace.url/team/userid" },
 #     { snapchat = "https://snapchat.com/add/username" },
 #     { soundcloud = "https://soundcloud.com/username" },
-#     { spotify = "https://open.spotify.com/user/userid" },
+      { spotify = "https://open.spotify.com/artist/14KuzLPV2nlreceeJmq9Js?si=ltVo3aRFT0CnJrjHoGnFyg" },
 #     { stack-overflow = "https://stackoverflow.com/users/userid/username" },
 #     { steam = "https://steamcommunity.com/profiles/userid" },
 #     { telegram = "https://t.me/username" },
