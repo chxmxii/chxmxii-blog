@@ -124,13 +124,13 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   cardViewScreenWidth = true
 
 [firebase]
-  # apiKey = "XXXXXX"
-  # authDomain = "XXXXXX"
-  # projectId = "XXXXXX"
-  # storageBucket = "XXXXXX"
-  # messagingSenderId = "XXXXXX"
-  # appId = "XXXXXX"
-  # measurementId = "XXXXXX"
+  apiKey = "AIzaSyBNwKLnaxWU6oD3xBxqlg67P1bfD2uLDkA"
+  authDomain = "myblogsite-11cde.firebaseapp.com"
+  projectId = "myblogsite-11cde"
+  storageBucket = "myblogsite-11cde.firebasestorage.app"
+  messagingSenderId = "630636513136"
+  appId = "1:630636513136:web:99515882a3ac542e1ab1b5"
+  measurementId = "G-K1VJLZB9V4"
 
 [fathomAnalytics]
   # site = "ABC12345"
@@ -144,8 +144,8 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   # enableTrackEvent = true
 
 [selineAnalytics]
-  # token = "XXXXXX"
-  # enableTrackEvent = true
+  token = "533bf8d3d180ca0"
+  enableTrackEvent = true
 
 [buymeacoffee]
   identifier = ""
