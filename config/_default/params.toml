@@ -5,11 +5,11 @@
 # Refer to the theme docs for more details about each of these parameters.
 # https://blowfish.page/docs/configuration/#theme-parameters
 
-colorScheme = "congo"
+colorScheme = "noir"
 defaultAppearance = "dark" # valid options: light or dark
-autoSwitchAppearance = false
+autoSwitchAppearance = true
 
-enableSearch = true
+enableSearch = false
 enableCodeCopy = true
 
 replyByEmail = false
@@ -44,18 +44,18 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
 [homepage]
   layout = "background" # valid options: page, profile, hero, card, background, custom
   homepageImage = "img/backg.png" # used in: hero, and card
-  showRecent = true
+  showRecent = false
   showRecentItems = 3
   showMoreLink = true
   showMoreLinkDest = "/blogs/"
-  cardView = true
+  cardView = false
   cardViewScreenWidth = false
   layoutBackgroundBlur = true # only used when layout equals background
 
 [article]
   showDate = true
   showViews = true
-  showLikes = true
+  showLikes = false
   showDateUpdated = false
   showAuthor = true
   showHero = true
