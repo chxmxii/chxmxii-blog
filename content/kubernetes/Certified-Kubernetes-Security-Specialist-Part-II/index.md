@@ -3,7 +3,7 @@ title: "Certified Kubernetes Security Specialist PART II"
 date: 2024-09-15
 draft: false
 description: "My certification notes for the CKS exam"
-tags: ["certs", "kubernetes", "security"]
+tags: ["certs", "kubernetes", "security", "cks"]
 ---
 Continuing from [part I](https://chxmxii.me/kubernetes/Certified-Kubernetes-Security-Specialist-Part-I/index.md). This is **part II** of the CKS exam preparation series, where I will be exploring more topics related to securing Kubernetes clusters.
 

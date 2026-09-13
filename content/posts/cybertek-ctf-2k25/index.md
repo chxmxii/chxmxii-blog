@@ -3,7 +3,7 @@ title: "CyberTEK-CTF 2k25"
 date: 2025-05-05
 draft: false
 description: "Solution for CTCTF 2025"
-tags: ["ctf", "misc"]
+tags: ["ctf", "misc", "cloud"]
 aliases: ["/writeups/CyberTEK-CTF-2K25/"]
 ---
 

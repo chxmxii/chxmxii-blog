@@ -3,7 +3,7 @@ title: "SYBank — how a key in a test file cost them the whole database"
 date: 2026-09-13
 draft: false
 description: "PwnSec CTF cloud writeup: leaked AWS creds in a test file chain into role assumption, S3 bucket policy abuse, a recovered Vim swap file, and envelope-encrypted RDS backups decrypted straight through KMS."
-tags: ["ctf", "cloud", "aws", "pwnsec", "writeup"]
+tags: ["ctf", "cloud", "aws"]
 ---
 
 I don't usually go this deep on the cloud challenges because they're either "we hid a flag in an S3 bucket, go find it" or a rabbit hole that needs three IAM PhDs. This one was different. It was a proper chain — the kind of thing that actually happens at work, which is probably why I enjoyed it so much. Every single step was a real mistake I've either seen in a review or, honestly, almost made myself.

@@ -11,6 +11,10 @@ get-utils:
 run:
 	@hugo server -D
 
+.PHONY: posters
+posters:
+	@python3 scripts/generate-gif-posters.py
+
 .PHONY: commit
 commit:
 	@if [ -z "$$(git status --porcelain)" ]; then \

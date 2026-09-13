@@ -11,6 +11,7 @@ autoSwitchAppearance = false
 
 enableSearch = true
 enableCodeCopy = true
+enableStructuredBreadcrumbs = true
 
 replyByEmail = false
 
@@ -21,7 +22,8 @@ disableImageOptimization = false
 disableTextInHeader = false
 backgroundImageWidth = 1200
 
-defaultBackgroundImage = "img/backg.png" # used as default for background images 
+defaultBackgroundImage = "img/backg.png" # used as default for background images
+backgroundCanvas = true # render defaultBackgroundImage as a fixed backdrop on every page/route
 defaultFeaturedImage = "img/featured.png" # used as default for featured images in all articles
 
 highlightCurrentMenuArea = true
@@ -32,7 +34,8 @@ giteaDefaultServer = "https://git.fsfe.org"
 forgejoDefaultServer = "https://v8.next.forgejo.org"
 
 [header]
-  layout = "fixed" #-fill-blur" # valid options: basic, fixed, fixed-fill, fixed-gradient, fixed-fill-blur
+  layout = "floating" # valid options: basic, fixed, fixed-fill, fixed-gradient, fixed-fill-blur, floating
+  mobileMenuStyle = "dropdown" # valid options: fullscreen, dropdown
 
 [footer]
   showMenu = true
@@ -42,12 +45,11 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   showScrollToTop = true
 
 [homepage]
-  layout = "background" # valid options: page, profile, hero, card, background, custom
-  homepageImage = "img/backg.png" # used in: hero, and card
+  layout = "background" # valid options: page, profile, hero, card, background, landing, custom
   showRecent = false
   showRecentItems = 3
   showMoreLink = true
-  showMoreLinkDest = "/blogs/"
+  showMoreLinkDest = "/posts/"
   cardView = false
   cardViewScreenWidth = false
   layoutBackgroundBlur = true # only used when layout equals background
@@ -73,6 +75,7 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   showPagination = true
   invertPagination = false
   showReadingTime = true
+  showReadingProgress = true
   showTableOfContents = true
   showRelatedContent = true
   relatedContentLimit = 3
@@ -80,6 +83,7 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   showAuthorsBadges = false
   showWordCount = false
   showSummary = false
+  showZenMode = true
   sharingLinks = [ "linkedin", "twitter", "reddit", "email", "whatsapp"]
 
 [list]
@@ -94,9 +98,10 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   showTableOfContents = false
   showCards = false
   groupByYear = true
-  cardView = false
+  cardView = true
   cardViewScreenWidth = false
   constrainItemsWidth = false
+  featureImageHover = true
 
 [sitemap]
   excludedKinds = ["taxonomy", "term"]
@@ -105,7 +110,6 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   showTermCount = true
   showHero = true
   heroStyle = "background" # valid options: basic, big, background, thumbAndBackground
-  heroImage = "/img/featured-ocp.png" # used in: hero, and card
   showBreadcrumbs = false
   showViews = true
   showLikes = false

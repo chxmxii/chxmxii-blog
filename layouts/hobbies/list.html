@@ -1,0 +1,24 @@
+{{/* Custom section list template for /hobbies/ - songs/games/books lists
+  instead of the default post grid. Data lives in content/hobbies/_index.md
+  front matter (music, games, books). */}}
+{{ define "main" }}
+  {{ .Scratch.Set "scope" "list" }}
+
+  <header>
+    {{ if .Params.showBreadcrumbs | default (site.Params.list.showBreadcrumbs | default false) }}
+      {{ partial "breadcrumbs.html" . }}
+    {{ end }}
+    <h1 class="mt-5 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+      {{ .Title | emojify }}
+    </h1>
+    {{ with .Description }}
+      <div class="mt-1 mb-2 text-base text-neutral-500 dark:text-neutral-400 print:hidden">{{ . | emojify }}</div>
+    {{ end }}
+  </header>
+
+  {{ with .Content }}
+    <section class="prose dark:prose-invert max-w-full mt-4">{{ . }}</section>
+  {{ end }}
+
+  {{ partial "hobbies-lists.html" . }}
+{{ end }}

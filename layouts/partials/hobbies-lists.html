@@ -1,0 +1,31 @@
+{{/* Renders .Params.music / .Params.games / .Params.books as three simple
+  lists. Uses utility classes already shipped in blowfish's compiled CSS
+  (border/bg/backdrop-blur combos used elsewhere in the theme) rather than
+  introducing brand new Tailwind utilities that wouldn't be compiled in. */}}
+{{ $sections := slice
+  (dict "key" "music" "heading" "🎵 songs" "items" .Params.music)
+  (dict "key" "games" "heading" "🎮 games" "items" .Params.games)
+  (dict "key" "books" "heading" "📚 books" "items" .Params.books)
+}}
+<div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+  {{ range $sections }}
+    {{ if .items }}
+      <div class="rounded-lg border border-neutral-300/80 bg-white/60 backdrop-blur-xl p-4 dark:border-neutral-600/80 dark:bg-neutral-900/50">
+        <h2 class="mt-0 mb-3 text-lg font-bold text-neutral-800 dark:text-neutral">{{ .heading }}</h2>
+        <ul class="not-prose m-0 list-none space-y-2 p-0">
+          {{ range .items }}
+            <li class="text-sm leading-snug text-neutral-700 dark:text-neutral-300">
+              {{ if .url }}
+                <a href="{{ .url }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-neutral-800 hover:underline decoration-primary-500 dark:text-neutral">{{ .title }}</a>
+              {{ else }}
+                <span class="font-semibold text-neutral-800 dark:text-neutral">{{ .title }}</span>
+              {{ end }}
+              {{ with .author }}<span class="text-neutral-500 dark:text-neutral-400"> — {{ . }}</span>{{ end }}
+              {{ with .note }}<span class="text-neutral-500 dark:text-neutral-400"> — {{ . }}</span>{{ end }}
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+    {{ end }}
+  {{ end }}
+</div>

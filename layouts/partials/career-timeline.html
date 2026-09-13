@@ -1,0 +1,52 @@
+{{/* Renders .Params.timeline (list of {age, year, title, body}) as a
+  vertical timeline, plus a handful of greyed-out "locked" nodes for
+  whatever comes after .Params.currentAge. Styling lives in
+  assets/css/career-timeline.css (loaded by layouts/career/list.html). */}}
+{{ $entries := .Params.timeline }}
+{{ $currentAge := .Params.currentAge }}
+{{ $lockedLabels := .Params.lockedLabels | default (slice "???" "???" "to be continued...") }}
+
+<div class="career-timeline">
+  {{ with resources.Get "img/lost.gif" }}
+    <img class="career-timeline__portal" src="{{ .RelPermalink }}" alt="" aria-hidden="true" loading="lazy">
+  {{ end }}
+  <div class="career-walker" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="4" r="2"></circle>
+      <path d="M12 6v6"></path>
+      <path d="M12 8l-4 3"></path>
+      <path d="M12 8l4 2"></path>
+      <path d="M12 12l-3 8"></path>
+      <path d="M12 12l4 7"></path>
+    </svg>
+  </div>
+  {{ range $entries }}
+    {{ $isCurrent := and $currentAge (eq .age $currentAge) }}
+    <div class="career-node{{ if $isCurrent }} career-node--current{{ end }}">
+      <div class="career-node__meta">
+        <span>age {{ .age }}</span>
+        {{ with .year }}<span>&middot; {{ . }}</span>{{ end }}
+        {{ if $isCurrent }}<span>&middot; you are here</span>{{ end }}
+      </div>
+      <div class="career-node__card">
+        <p class="career-node__title">{{ .title | emojify }}</p>
+        {{ with .body }}<p class="career-node__body">{{ . | markdownify }}</p>{{ end }}
+      </div>
+    </div>
+  {{ end }}
+
+  {{ range $lockedLabels }}
+    <div class="career-node career-node--locked">
+      <div class="career-node__meta"><span>&mdash;</span></div>
+      <div class="career-node__card">
+        <p class="career-node__title">
+          <svg class="career-node__lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="10" width="16" height="10" rx="2"></rect>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+          </svg>
+          {{ . }}
+        </p>
+      </div>
+    </div>
+  {{ end }}
+</div>

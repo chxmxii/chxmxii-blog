@@ -1,0 +1,25 @@
+{{/*
+  Given an image Resource, return its static "poster" (first-frame) Resource
+  when it's an animated GIF and a "<name>-poster.png" sibling exists next to
+  it - otherwise return the original resource unchanged.
+
+  Usage: {{ $featured = partial "functions/gif-poster.html" (dict "resource" $featured "page" $p) }}
+
+  Generate posters with: python3 scripts/generate-gif-posters.py (or `make posters`)
+*/}}
+{{ $r := .resource }}
+{{ $result := $r }}
+{{ if and $r (eq $r.MediaType.SubType "gif") }}
+  {{ $posterName := replace $r.Name (path.Ext $r.Name) "-poster.png" }}
+  {{ $candidate := "" }}
+  {{ with .page }}
+    {{ $candidate = .Resources.Get $posterName }}
+  {{ end }}
+  {{ if not $candidate }}
+    {{ $candidate = resources.Get $posterName }}
+  {{ end }}
+  {{ if $candidate }}
+    {{ $result = $candidate }}
+  {{ end }}
+{{ end }}
+{{ return $result }}
