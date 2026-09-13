@@ -1,10 +1,17 @@
 {{/* Site-wide <head> hook (blowfish's head.html calls this automatically,
-  partialCached against .Site so it renders once). Sets the portal GIF as a
-  CSS custom property and, synchronously (before first paint - this MUST
+  partialCached against .Site so it renders once). Sets the portal image as
+  a CSS custom property and, synchronously (before first paint - this MUST
   run inline and unblocked, not deferred), applies the "arriving via
   portal" classes if the previous page set them before navigating away.
-  See assets/css/custom.css and layouts/partials/extend-footer.html. */}}
-{{ with resources.Get "img/lost.gif" }}
+  See assets/css/custom.css and layouts/partials/extend-footer.html.
+
+  Uses a static 4K portal image (portal-4k.jpg) rather than the small
+  750x638 lost.gif avatar: the transition covers the full viewport for
+  ~0.6s, so a crisp high-res texture matters far more than it being
+  animated (a 4K *animated* GIF of this isn't really a thing - the format
+  doesn't compress like that, it'd be tens of MB). lost.gif stays for the
+  avatar, where it's small and animation is what shows off. */}}
+{{ with resources.Get "img/portal-4k.jpg" }}
   <style>
     :root {
       --portal-image: url("{{ .RelPermalink }}");

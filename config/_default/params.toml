@@ -22,7 +22,7 @@ disableImageOptimization = false
 disableTextInHeader = false
 backgroundImageWidth = 1200
 
-defaultBackgroundImage = "img/backg.jpg" # used as default for background images (4K marble bust, public domain via Unsplash/National Gallery of Denmark)
+defaultBackgroundImage = "img/backg.png" # used as default for background images
 backgroundCanvas = true # render defaultBackgroundImage as a fixed backdrop on every page/route
 defaultFeaturedImage = "img/featured.png" # used as default for featured images in all articles
 
