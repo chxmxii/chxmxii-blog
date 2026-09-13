@@ -55,20 +55,21 @@
 @keyframes career-walk-bob {
   0%,
   100% {
-    transform: translateY(0) rotate(-6deg);
+    transform: scale(1);
   }
   50% {
-    transform: translateY(-3px) rotate(6deg);
+    transform: scale(0.88);
   }
 }
 
 @keyframes career-idle-bob {
   0%,
+  60%,
   100% {
-    transform: translateY(0);
+    transform: scale(1);
   }
-  50% {
-    transform: translateY(-2px);
+  30% {
+    transform: scale(0.92);
   }
 }
 

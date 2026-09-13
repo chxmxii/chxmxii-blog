@@ -4,7 +4,6 @@ date: 2026-09-13
 draft: false
 description: "PwnSec CTF cloud writeup: leaked AWS creds in a test file chain into role assumption, S3 bucket policy abuse, a recovered Vim swap file, and envelope-encrypted RDS backups decrypted straight through KMS."
 tags: ["ctf", "cloud", "aws"]
-featureimage: "access-denied.gif"
 ---
 
 I don't usually go this deep on the cloud challenges because they're either "we hid a flag in an S3 bucket, go find it" or a rabbit hole that needs three IAM PhDs. This one was different. It was a proper chain — the kind of thing that actually happens at work, which is probably why I enjoyed it so much. Every single step was a real mistake I've either seen in a review or, honestly, almost made myself.
@@ -84,11 +83,7 @@ aws --profile dba s3 ls s3://sybank-dev-s3filesharing      # has a .automation.s
 
 That `.automation.sh.swp` made me grin. It's a **Vim swap file**. Every time you open a file in Vim it drops a hidden `.<name>.swp` next to it holding the buffer. So a leftover `.swp` is basically a snapshot of whatever someone was editing — here, an `automation.sh` — and it usually still has the plaintext the real script was hiding.
 
-Problem: I could *list* it as dba but I couldn't actually `GetObject` it. Denied. Sat there for a second annoyed...
-
-![access denied](access-denied.gif)
-
-...and then remembered dba could touch the bucket *policy*.
+Problem: I could *list* it as dba but I couldn't actually `GetObject` it. Denied. Sat there for a second annoyed... and then remembered dba could touch the bucket *policy*.
 
 If you can't read the object but you *can* rewrite the bucket's resource policy, you just grant yourself the read. That's it. dba had `s3:PutBucketPolicy`, so:
 
