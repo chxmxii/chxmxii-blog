@@ -4,6 +4,7 @@ date: 2024-08-06
 draft: false
 description: "how to deploy gitlab ce server on docker"
 tags: ["blog", "perso"]
+aliases: ["/blogs/gitlab-in-docker/"]
 ---
 
 

@@ -9,7 +9,7 @@ colorScheme = "noir"
 defaultAppearance = "dark" # valid options: light or dark
 autoSwitchAppearance = false
 
-enableSearch = false
+enableSearch = true
 enableCodeCopy = true
 
 replyByEmail = false
@@ -65,7 +65,7 @@ forgejoDefaultServer = "https://v8.next.forgejo.org"
   showBreadcrumbs = true
   showDraftLabel = true
   showEdit = false
-  showComments = true
+  showComments = false
   editURL = "https://github.com/chxmxii/chxmxii-blog/tree/main/content"
   editAppendPath = true
   seriesOpened = true

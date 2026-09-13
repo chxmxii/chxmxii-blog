@@ -4,6 +4,7 @@ date: 2024-12-04
 draft: false
 description: "How to set up Azure DevOps as a Git source for AWX"
 tags: ["awx", "ansible", "blog"]
+aliases: ["/blogs/using-azure-devops-repo-as-scm-for-awx/"]
 ---
 
 ## Intro

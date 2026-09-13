@@ -23,7 +23,7 @@ commit:
 	scope=$${s:-general}; \
 	git add .; \
 	git commit -m "$$scope: $(m)"; \
-	git push origin master
+	git push origin main
 
 .PHONY: push
 push:

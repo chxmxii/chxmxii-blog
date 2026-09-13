@@ -4,6 +4,7 @@ date: 2025-07-30
 draft: false
 description: "Solutions for the first challenge from WIZ utltimate cloud champion"
 tags: ["ctf", "cloud", "aws"]
+aliases: ["/writeups/Wiz-Cloudsec/PerimeterLeak/"]
 ---
 
 Our first challenge starts with a brief introduction..

@@ -4,6 +4,7 @@ date: 2024-05-05
 draft: false
 description: "a description"
 tags: ["ctf", "misc"]
+aliases: ["/writeups/CyberTEK-CTF-2k24/"]
 ---
 
 ### Intro;

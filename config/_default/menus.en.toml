@@ -11,23 +11,29 @@
 # ordered by weight from lowest to highest.
 
 [[main]]
-    name = "blog"
-    pageRef = "blogs"
+    name = "posts"
+    pageRef = "posts"
     weight = 1
-    
+
 [[main]]
-    name = "writeups"
-    pageRef = "writeups"
-    weight = 9
-   
+    name = "hobbies"
+    pageRef = "hobbies"
+    weight = 5
+
+[[main]]
+    name = "career"
+    pageRef = "career"
+    weight = 6
+
 [[main]]
     name = "certs"
     weight = 8
-    
 
-#[[main]]
-#  name = "Parent"
-#  weight = 20
+[[main]]
+    name = "tags"
+    pageRef = "tags"
+    weight = 9
+
 
 [[main]]
    name = "Redhat"
@@ -46,40 +52,6 @@
    parent = "certs"
    pageRef = "aws"
    weight = 20
-
-#[[main]]
-#   name = "Security"
-#   parent = "Certs"
-#   pageRef = "certs/security"
-#   weight = 20
-
-#[[main]]
-#  name = "example sub-menu 2"
-#  parent = "Parent"
-#  pageRef = "posts"
-#  weight = 20
-
-#[[subnavigation]]
-#    name = "An interesting topic"
-#    pageRef = "tags/interesting-topic"
-#    weight = 10
-
-#[[subnavigation]]
-#  name = "My Awesome Category"
-#  pre = "github"
-#  pageRef = "categories/awesome"
-#  weight = 20
-
-#[[main]]
-#  name = "Categories"
-#  pageRef = "categories"
-#  weight = 20
-
-#[[main]]
-#  name = "Tags"
-#  pageRef = "tags"
-#  weight = 30
-
 
 # -- Footer Menu --
 # The footer menu is displayed at the bottom of the page, just before

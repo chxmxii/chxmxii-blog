@@ -4,6 +4,7 @@ date: 2024-11-17
 draft: false
 description: "writeup for kloud10 chall"
 tags: ["ctf", "security", "helm", "aws", "pentest"]
+aliases: ["/writeups/1733675908443-PwnSec-CTF-2k24/"]
 ---
 
 {{< button href="https://ctf.pwnsec.xyz/" target="_self" >}}

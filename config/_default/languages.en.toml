@@ -1,6 +1,6 @@
 disabled = false
-languageCode = "en"
-languageName = "English"
+locale = "en"
+label = "English"
 weight = 1
 title = "chxmxii_"
 
@@ -10,7 +10,6 @@ title = "chxmxii_"
   rtl = false
   dateFormat = "2 January 2006"
   logo = "img/logo.png"
-  secondaryLogo = "img/mor.jpg"
   description = "a wealth of information"
   copyright = "©️ 2026 w/luv chxmxii - All Rights Reserved"
 

@@ -4,6 +4,7 @@ date: 2025-05-05
 draft: false
 description: "Solution for CTCTF 2025"
 tags: ["ctf", "misc"]
+aliases: ["/writeups/CyberTEK-CTF-2K25/"]
 ---
 
 # Intro
