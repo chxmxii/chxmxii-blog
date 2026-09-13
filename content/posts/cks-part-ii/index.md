@@ -4,11 +4,12 @@ date: 2024-09-15
 draft: false
 description: "My certification notes for the CKS exam"
 tags: ["certs", "kubernetes", "security", "cks"]
+aliases: ["/kubernetes/Certified-Kubernetes-Security-Specialist-Part-II/"]
 ---
-Continuing from [part I](https://chxmxii.me/kubernetes/Certified-Kubernetes-Security-Specialist-Part-I/index.md). This is **part II** of the CKS exam preparation series, where I will be exploring more topics related to securing Kubernetes clusters.
+Continuing from [part I](/posts/cks-part-i/). This is **part II** of the CKS exam preparation series, where I will be exploring more topics related to securing Kubernetes clusters.
 
 If you haven't read part I, I recommend you do so before continuing with this part.
-{{< article link="https://chxmxii.me/kubernetes/Certified-Kubernetes-Security-Specialist-Part-I/index.md" >}}
+[← Back to Part I](/posts/cks-part-i/)
 
 ## Supply chain security;
 

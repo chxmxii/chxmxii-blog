@@ -25,21 +25,6 @@
     pageRef = "career"
     weight = 6
 
-[[main]]
-   name = "Redhat"
-   pageRef = "redhat"
-   weight = 20
-
-[[main]]
-   name = "K8S"
-   pageRef = "kubernetes"
-   weight = 21
-
-[[main]]
-   name = "AWS"
-   pageRef = "aws"
-   weight = 22
-
 # -- Footer Menu --
 # The footer menu is displayed at the bottom of the page, just before
 # the copyright notice. Configure as per the main menu above.

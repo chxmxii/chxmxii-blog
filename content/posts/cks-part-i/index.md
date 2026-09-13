@@ -4,6 +4,7 @@ date: 2024-08-29
 draft: false
 description: "My certification notes for the CKS exam"
 tags: ["certs", "kubernetes", "security", "cks"]
+aliases: ["/kubernetes/Certified-Kubernetes-Security-Specialist-Part-I/"]
 ---
 As I prepare for the **CKS** exam, I will be documenting my notes here (at the high level, I won't deep dive into the topics). This is **part I** of the series. I will be updating this post as I go along.
 
@@ -419,4 +420,4 @@ status: {}
 
 Next up, we will be looking at the **Part II** of the series. tackling more advanced topics.
 
-{{< article link="https://chxmxii.me/kubernetes/Certified-Kubernetes-Security-Specialist-Part-II/index.md" >}}
+[Continue to Part II →](/posts/cks-part-ii/)
