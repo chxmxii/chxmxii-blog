@@ -1,0 +1,91 @@
+{{/* Site-wide end-of-body hook (blowfish's footer.html calls this
+  automatically if it exists). Green portal page transitions: reveals the
+  new page by shrinking the portal overlay away (if we just arrived via
+  one, see extend-head.html), and intercepts internal link clicks to play
+  the "entering the portal" animation before navigating. */}}
+<script>
+  (function () {
+    var html = document.documentElement;
+    var reduceMotion =
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function clearPortal() {
+      html.classList.remove("portal-active", "portal-covering");
+    }
+
+    // Arrived via a portal jump: the overlay is already fully covering
+    // (set synchronously in <head>) - shrink it away to reveal the page.
+    if (html.classList.contains("portal-covering")) {
+      if (reduceMotion) {
+        clearPortal();
+      } else {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            html.classList.remove("portal-covering");
+          });
+        });
+        html.addEventListener("transitionend", function onEnd(e) {
+          if (e.target === html && e.propertyName === "clip-path") {
+            html.removeEventListener("transitionend", onEnd);
+            clearPortal();
+          }
+        });
+        window.setTimeout(clearPortal, 1200);
+      }
+    }
+
+    if (reduceMotion) return;
+
+    document.addEventListener("click", function (e) {
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      var a = e.target.closest("a[href]");
+      if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+
+      var url;
+      try {
+        url = new URL(a.getAttribute("href"), window.location.href);
+      } catch (err) {
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) {
+        return; // same-page anchor jump
+      }
+
+      e.preventDefault();
+
+      var originX = e.detail === 0 ? window.innerWidth / 2 : e.clientX;
+      var originY = e.detail === 0 ? window.innerHeight / 2 : e.clientY;
+      html.style.setProperty("--portal-x", originX + "px");
+      html.style.setProperty("--portal-y", originY + "px");
+
+      html.classList.add("portal-active");
+      void html.offsetWidth; // force reflow so the 0% state commits first
+      requestAnimationFrame(function () {
+        html.classList.add("portal-covering");
+      });
+
+      var navigated = false;
+      var go = function () {
+        if (navigated) return;
+        navigated = true;
+        try {
+          sessionStorage.setItem("portalArrive", "1");
+          sessionStorage.setItem("portalX", String(originX));
+          sessionStorage.setItem("portalY", String(originY));
+        } catch (err) {}
+        window.location.href = url.href;
+      };
+
+      html.addEventListener("transitionend", function onEnd(ev) {
+        if (ev.target === html && ev.propertyName === "clip-path") {
+          html.removeEventListener("transitionend", onEnd);
+          go();
+        }
+      });
+      window.setTimeout(go, 750); // safety net
+    });
+  })();
+</script>

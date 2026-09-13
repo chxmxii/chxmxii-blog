@@ -25,18 +25,6 @@
   );
 }
 
-.career-timeline__portal {
-  position: absolute;
-  top: -1.1rem;
-  left: 0.75rem;
-  width: 2.4rem;
-  height: 2.4rem;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  object-fit: cover;
-  box-shadow: 0 0 0 3px rgba(var(--color-neutral-900), 0.6);
-}
-
 .career-walker {
   position: absolute;
   top: 0;

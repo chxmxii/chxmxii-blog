@@ -16,7 +16,7 @@ title = "chxmxii_"
 [params.author]
     name = "MOUHIB CHVMSI"
     email = "chamsii.mouhib@gmail.com"
-    image = "img/lost-poster.png"
+    image = "img/lost.gif"
     imageQuality = 96
     headline = "love to do engineering things!"
     bio = "automation && container guy"

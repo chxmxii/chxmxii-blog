@@ -1,65 +1,69 @@
 /*
   Site-wide custom CSS (blowfish's head.html auto-includes
   assets/css/custom.css into the compiled bundle if it exists - no
-  layout override needed).
+  layout override needed, this is the theme's documented extension
+  point).
 
-  Green portal page transitions, via the Cross-Document View Transitions
-  API. Progressive enhancement only: browsers without support (anything
-  non-Chromium, as of this writing) just navigate instantly like today -
-  nothing to feature-detect, the whole thing is inert until supported.
+  Blowfish ships a PRE-compiled Tailwind stylesheet (assets/css/compiled/
+  main.css), built once by the theme authors against their own exampleSite
+  - it is NOT recompiled against this project's templates. Arbitrary-value
+  utilities this project introduces (aspect-[3/4], text-[0.7rem], etc.) or
+  conditionally-used theme utilities that never rendered in the exampleSite
+  (group-hover:scale-[1.03] needs featureImageHover=true) have no matching
+  CSS rule unless supplied here by hand.
 */
 
-@view-transition {
-  navigation: auto;
+/* -- utility fallbacks for classes not present in the pre-compiled bundle -- */
+
+.group:hover .group-hover\:scale-\[1\.03\] {
+  transform: scale(1.03);
 }
+
+.hobby-card__image {
+  aspect-ratio: 3 / 4;
+}
+
+.hobby-card__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* -- green portal page transitions --
+  Classic overlay-based MPA transition (not the CSS View Transitions API -
+  that only cross-fades/clips a snapshot, it can't play an actual animated
+  GIF during the transition). Driven by layouts/partials/extend-head.html
+  (arrival, must be inline/synchronous to avoid a flash of unstyled
+  content) and layouts/partials/extend-footer.html (departure + reveal).
+*/
 
 :root {
-  --portal-green: #8fe637;
-  --portal-green-dark: #2f6b12;
+  --portal-x: 50%;
+  --portal-y: 50%;
 }
 
-::view-transition-group(root) {
-  animation-duration: 0.6s;
+html.portal-active::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  pointer-events: none;
+  background-color: #0b1a06;
+  background-image: var(--portal-image);
+  background-size: cover;
+  background-position: center;
+  clip-path: circle(0% at var(--portal-x) var(--portal-y));
+  transition: clip-path 0.65s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-::view-transition-old(root) {
-  animation: portal-suck-in 0.45s cubic-bezier(0.55, 0, 1, 0.45) both;
-}
-
-::view-transition-new(root) {
-  clip-path: circle(0% at 50% 50%);
-  animation: portal-open 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
-}
-
-@keyframes portal-suck-in {
-  0% {
-    opacity: 1;
-    filter: saturate(1) brightness(1);
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    filter: saturate(3) hue-rotate(45deg) brightness(1.4);
-    transform: scale(0.94);
-  }
-}
-
-@keyframes portal-open {
-  0% {
-    clip-path: circle(0% at 50% 50%);
-    filter: drop-shadow(0 0 0 var(--portal-green)) saturate(2.2) brightness(1.3);
-  }
-  60% {
-    filter: drop-shadow(0 0 3vw var(--portal-green)) saturate(1.6) brightness(1.1);
-  }
-  100% {
-    clip-path: circle(75% at 50% 50%);
-    filter: drop-shadow(0 0 0 transparent) saturate(1) brightness(1);
-  }
+html.portal-active.portal-covering::before {
+  clip-path: circle(145% at var(--portal-x) var(--portal-y));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @view-transition {
-    navigation: none;
+  html.portal-active::before {
+    transition: none;
   }
 }

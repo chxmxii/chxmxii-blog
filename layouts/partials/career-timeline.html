@@ -7,9 +7,6 @@
 {{ $lockedLabels := .Params.lockedLabels | default (slice "???" "???" "to be continued...") }}
 
 <div class="career-timeline">
-  {{ with resources.Get "img/lost.gif" }}
-    <img class="career-timeline__portal" src="{{ .RelPermalink }}" alt="" aria-hidden="true" loading="lazy">
-  {{ end }}
   <div class="career-walker" aria-hidden="true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="4" r="2"></circle>

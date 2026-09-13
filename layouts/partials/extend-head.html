@@ -1,0 +1,30 @@
+{{/* Site-wide <head> hook (blowfish's head.html calls this automatically,
+  partialCached against .Site so it renders once). Sets the portal GIF as a
+  CSS custom property and, synchronously (before first paint - this MUST
+  run inline and unblocked, not deferred), applies the "arriving via
+  portal" classes if the previous page set them before navigating away.
+  See assets/css/custom.css and layouts/partials/extend-footer.html. */}}
+{{ with resources.Get "img/lost.gif" }}
+  <style>
+    :root {
+      --portal-image: url("{{ .RelPermalink }}");
+    }
+  </style>
+{{ end }}
+<script>
+  (function () {
+    try {
+      if (sessionStorage.getItem("portalArrive") === "1") {
+        sessionStorage.removeItem("portalArrive");
+        var html = document.documentElement;
+        var x = sessionStorage.getItem("portalX");
+        var y = sessionStorage.getItem("portalY");
+        sessionStorage.removeItem("portalX");
+        sessionStorage.removeItem("portalY");
+        if (x !== null) html.style.setProperty("--portal-x", x + "px");
+        if (y !== null) html.style.setProperty("--portal-y", y + "px");
+        html.classList.add("portal-active", "portal-covering");
+      }
+    } catch (e) {}
+  })();
+</script>

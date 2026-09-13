@@ -26,32 +26,19 @@
     weight = 6
 
 [[main]]
-    name = "certs"
-    weight = 8
-
-[[main]]
-    name = "tags"
-    pageRef = "tags"
-    weight = 9
-
-
-[[main]]
    name = "Redhat"
-   parent = "certs"
    pageRef = "redhat"
-   weight = 204
+   weight = 20
 
 [[main]]
    name = "K8S"
-   parent = "certs"
    pageRef = "kubernetes"
-   weight = 20
+   weight = 21
 
 [[main]]
    name = "AWS"
-   parent = "certs"
    pageRef = "aws"
-   weight = 20
+   weight = 22
 
 # -- Footer Menu --
 # The footer menu is displayed at the bottom of the page, just before
