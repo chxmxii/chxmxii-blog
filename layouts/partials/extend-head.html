@@ -5,9 +5,10 @@
   portal" classes if the previous page set them before navigating away.
   See assets/css/custom.css and layouts/partials/extend-footer.html.
 
-  Uses the same portal GIF as the avatar (lost.gif) - animated wins over
-  resolution here, per user request. */}}
-{{ with resources.Get "img/lost.gif" }}
+  portal-vortex.svg is an original swirl graphic (code-generated: SVG
+  turbulence/displacement filter, not traced or copied from any existing
+  artwork) - vector, so it's crisp at any viewport size. */}}
+{{ with resources.Get "img/portal-vortex.svg" }}
   <style>
     :root {
       --portal-image: url("{{ .RelPermalink }}");
