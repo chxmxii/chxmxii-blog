@@ -1,5 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
   <rect width="800" height="800" fill="#000000"></rect>
+  <defs>
+    <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"></feGaussianBlur>
+    </filter>
+    <filter id="innerBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"></feGaussianBlur>
+    </filter>
+    <radialGradient id="portalOuter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8fe637" stop-opacity="0.85"></stop>
+      <stop offset="60%" stop-color="#4fae1c" stop-opacity="0.55"></stop>
+      <stop offset="100%" stop-color="#0d2a05" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="portalInner" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#031400"></stop>
+      <stop offset="70%" stop-color="#0f3308"></stop>
+      <stop offset="100%" stop-color="#1f5c0d"></stop>
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="400" cy="400" rx="230" ry="270" fill="url(#portalOuter)" filter="url(#softBlur)"></ellipse>
+  <ellipse cx="400" cy="400" rx="150" ry="185" fill="url(#portalInner)" filter="url(#innerBlur)"></ellipse>
+  <ellipse cx="400" cy="400" rx="150" ry="185" fill="none" stroke="#c8ffa0" stroke-opacity="0.5" stroke-width="3" filter="url(#innerBlur)"></ellipse>
+
   <g>
     <circle cx="511.5" cy="20.0" r="1" fill="#ffffff" opacity="0.51"></circle>
     <circle cx="111.6" cy="82.0" r="1.8" fill="#ffffff" opacity="0.93"></circle>
