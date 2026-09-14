@@ -5,10 +5,11 @@
   portal" classes if the previous page set them before navigating away.
   See assets/css/custom.css and layouts/partials/extend-footer.html.
 
-  portal-vortex.svg is an original, code-generated starfield (plain
-  black + scattered stars) - vector, so it's crisp at any viewport
-  size. */}}
-{{ with resources.Get "img/portal-vortex.svg" }}
+  portal-vortex.jpg is a legitimately-licensed abstract 3D-rendered
+  vortex (Unsplash License - free for any use, no attribution required;
+  photographer: Logan Voss) - an original digital artwork, not a
+  reproduction of any copyrighted show/character design. */}}
+{{ with resources.Get "img/portal-vortex.jpg" }}
   <style>
     :root {
       --portal-image: url("{{ .RelPermalink }}");
