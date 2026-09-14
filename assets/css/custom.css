@@ -31,7 +31,7 @@
   line-height: 1.3;
 }
 
-/* -- green portal page transitions --
+/* -- portal (starfield) page transitions --
   Classic overlay-based MPA transition (not the CSS View Transitions API -
   that only cross-fades/clips a snapshot, it can't play an actual animated
   GIF during the transition). Driven by layouts/partials/extend-head.html
@@ -50,7 +50,7 @@ html.portal-active::before {
   inset: 0;
   z-index: 999999;
   pointer-events: none;
-  background-color: #0b1a06;
+  background-color: #000000;
   background-image: var(--portal-image);
   background-size: cover;
   background-position: center;
