@@ -2,7 +2,21 @@
   automatically if it exists). Green portal page transitions: reveals the
   new page by shrinking the portal overlay away (if we just arrived via
   one, see extend-head.html), and intercepts internal link clicks to play
-  the "entering the portal" animation before navigating. */}}
+  the "entering the portal" animation before navigating.
+
+  The spinning vortex image lives here (a real <img>, not a CSS
+  background) because only a real element can be independently rotated
+  while a separate clip-path controls the visible "portal opening"
+  shape - a background-image has no rotate-transform of its own. This
+  div is parsed late (end of body), so on arrival the plain black
+  html::before (see custom.css) covers the screen first for a few ms
+  before this catches up - still zero flash of page content, just a
+  briefly imageless black circle. */}}
+{{ with resources.Get "img/portal-vortex.jpg" }}
+  <div class="portal-vortex-layer" aria-hidden="true">
+    <img class="portal-vortex-layer__img" src="{{ .RelPermalink }}" alt="">
+  </div>
+{{ end }}
 <script>
   (function () {
     var html = document.documentElement;

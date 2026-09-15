@@ -1,21 +1,11 @@
 {{/* Site-wide <head> hook (blowfish's head.html calls this automatically,
-  partialCached against .Site so it renders once). Sets the portal image as
-  a CSS custom property and, synchronously (before first paint - this MUST
-  run inline and unblocked, not deferred), applies the "arriving via
-  portal" classes if the previous page set them before navigating away.
-  See assets/css/custom.css and layouts/partials/extend-footer.html.
-
-  portal-vortex.jpg is a legitimately-licensed abstract 3D-rendered
-  vortex (Unsplash License - free for any use, no attribution required;
-  photographer: Logan Voss) - an original digital artwork, not a
-  reproduction of any copyrighted show/character design. */}}
-{{ with resources.Get "img/portal-vortex.jpg" }}
-  <style>
-    :root {
-      --portal-image: url("{{ .RelPermalink }}");
-    }
-  </style>
-{{ end }}
+  partialCached against .Site so it renders once). Synchronously (before
+  first paint - this MUST run inline and unblocked, not deferred) applies
+  the "arriving via portal" classes if the previous page set them before
+  navigating away, so the plain black html::before covers the screen with
+  zero flash of page content. See assets/css/custom.css and
+  layouts/partials/extend-footer.html (the spinning vortex image itself,
+  plus the rest of the transition JS). */}}
 <script>
   (function () {
     try {
