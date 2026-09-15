@@ -23,6 +23,19 @@
     var reduceMotion =
       window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Each page load is a fresh DOM, so the spin animation would otherwise
+    // restart at 0deg every time - meaning the tail of the departure spin
+    // (old page) and the start of the arrival spin (new page) don't line
+    // up, which reads as the rotation snapping backwards mid-transition.
+    // Phase-lock it to wall-clock time instead, via a negative delay, so
+    // the apparent angle is continuous across the page boundary.
+    var vortexImg = document.querySelector(".portal-vortex-layer__img");
+    if (vortexImg) {
+      var spinPeriod = 16; // must match the animation-duration in custom.css
+      var phase = (Date.now() / 1000) % spinPeriod;
+      vortexImg.style.animationDelay = "-" + phase + "s";
+    }
+
     function clearPortal() {
       html.classList.remove("portal-active", "portal-covering");
     }
