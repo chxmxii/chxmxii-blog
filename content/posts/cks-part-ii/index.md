@@ -2,14 +2,11 @@
 title: "Certified Kubernetes Security Specialist PART II"
 date: 2024-09-15
 draft: false
-description: "My certification notes for the CKS exam"
+description: "CKS exam notes, part II — supply chain security, image scanning, runtime monitoring with Falco, auditing, and kernel hardening"
 tags: ["certs", "kubernetes", "security", "cks"]
 aliases: ["/kubernetes/Certified-Kubernetes-Security-Specialist-Part-II/"]
 ---
-Continuing from [part I](/posts/cks-part-i/). This is **part II** of the CKS exam preparation series, where I will be exploring more topics related to securing Kubernetes clusters.
-
-If you haven't read part I, I recommend you do so before continuing with this part.
-[← Back to Part I](/posts/cks-part-i/)
+**Part II** of the CKS notes, picking up straight from [part I](/posts/cks-part-i/) — read that first if you haven't.
 
 ## Supply chain security;
 
@@ -436,12 +433,12 @@ So what to do?
 
 ---
 
-The exam was updated after I took it, so some of the topics might not be relevant anymore. other than that, new topics were added to the exam, such as;
-- **SBOMs;** Software Bill of Materials.
-- **Network Policies;** w/p2p encryption using cillium.
-- **Linting;** using kubeLinter.
+The exam changed after I took it, so a few of these topics may no longer be on it. It also picked up new ones, including:
+- **SBOMs:** Software Bill of Materials.
+- **Network Policies:** pod-to-pod encryption via Cilium.
+- **Linting:** using kubeLinter.
 
-I hope this series was helpful to you, and I wish you the best of luck in your CKS exam!
+That's the series. Good luck on the exam.
 
 {{< alert icon="-" cardColor="#42445A" textColor="white"  >}}
 **References:**

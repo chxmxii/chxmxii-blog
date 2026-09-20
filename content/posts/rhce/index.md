@@ -2,11 +2,11 @@
 title: "Red Hat Certified Engineer"
 date: 2023-01-05
 draft: false
-description: "My certification notes for the RHCE exam!"
+description: "Notes from studying for the RHCE — Ansible-driven RHEL administration, hands-on"
 tags: ["certs", "ansible"]
 aliases: ["/redhat/1733494376968-Red-Hat-Certified-Engineer/"]
 ---
 
-The redhat certified engineer exam is a hands-on exam that tests your knowledge and skills in managing Red Hat Enterprise Linux systems using ansible. I've recently passed the exam and wanted to share my notes. This is a collection of notes I've taken while studying for the exam.
+RHCE is hands-on: it checks whether you can actually run Red Hat Enterprise Linux systems with Ansible, not just recite playbook syntax. I passed it recently. Below are the notes I built while prepping, cleaned up enough to be useful to someone else.
 
 {{< button href="https://chxmxii.github.io/rhce/main.html" >}}View Notes{{< /button >}}

@@ -2,25 +2,24 @@
 title: "Authenticating AWX with Azure DevOps using Personal Access Tokens"
 date: 2024-12-04
 draft: false
-description: "How to set up Azure DevOps as a Git source for AWX"
+description: "Fixing the fatal: Authentication failed error when you point AWX at an Azure DevOps Git repo"
 tags: ["awx", "ansible", "blog"]
 aliases: ["/blogs/using-azure-devops-repo-as-scm-for-awx/"]
 ---
 
 ## Intro
 
-If you’ve ever tried syncing a Git repository from Azure DevOps into AWX, you’ve probably run into some weird issues. And the most annoying is that the sync job keep failing with an error message `fatal: Authentication failed`. Fortunately, And after struggling with this myself, I found a working solution worth sharing.
+Try syncing a Git repo from Azure DevOps into AWX and you'll likely hit the same wall I did: the sync job dies with `fatal: Authentication failed`, every time, no matter how many times you double-check the token. It took me a few hours of digging to find a fix, so here it is.
 
 ---
 
-The main problem is that AWX doesn’t support the way Microsoft expects you to authenticate. Azure DevOps relies on personal access tokens (PATs) sent in an Authorization header when connecting to Git, as explained [here](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Linux).
+The root problem is that AWX doesn't speak the auth flow Microsoft expects. Azure DevOps wants personal access tokens (PATs) sent in an Authorization header, [as documented here](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Linux) — AWX just doesn't do that natively.
 
-Many people suggest using SSH keys, but in many setups (like mine), SSH access is disabled for security reasons, And building a custom execution environment and injecting a Git config file into the container might work, but it felt like overkill for something that should be straightforward.
-
+SSH keys are the usual workaround people suggest, but that's off the table if SSH access is locked down in your setup, which it is in mine. Building a custom execution environment and baking a Git config file into the container would work too. It's also way more effort than a straightforward auth problem deserves.
 
 ## Solution
 
-After hours of testing and digging around, I discovered a helpful Git feature that lets you inject configuration dynamically at runtime. This is done using `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_*`, and `GIT_CONFIG_VALUE_*`. (you can read more [here](https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT))
+Git has a feature most people never touch: injecting config at runtime through environment variables — `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_*`, and `GIT_CONFIG_VALUE_*`. ([Documented here](https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT) if you want the full picture.) That's the way in.
 
 All you need to do is pass these as environment variables to the job that performs the project sync. It should look like:
 
@@ -33,10 +32,10 @@ All you need to do is pass these as environment variables to the job that perfor
 }
 ```
 
-To generate the value for `GIT_CONFIG_VALUE_0` use `printf ":$PAT" | base64`, please note that the username part before the colon is intentionally empty.
+Generate `GIT_CONFIG_VALUE_0` with `printf ":$PAT" | base64`. Yes, the colon comes before an empty username — that's intentional, not a typo.
 
 ---
 
 ## Das Ende
 
-This method lets you sync Azure DevOps Git repos in AWX using PATs without needing to modify containers or set up SSH. It worked well for me, and I hope it saves you the hours I spent trying to make this simple thing work.
+No container rebuilds, no SSH setup, just PATs doing what they're supposed to do. This worked well for me on the first real try. If it saves you the hours I burned on it, good.

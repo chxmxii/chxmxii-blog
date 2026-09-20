@@ -2,21 +2,21 @@
 title: "Certified Kubernetes Security Specialist PART I"
 date: 2024-08-29
 draft: false
-description: "My certification notes for the CKS exam"
+description: "CKS exam notes, part I — cluster setup, network policies, RBAC, secrets encryption, and container runtime sandboxing"
 tags: ["certs", "kubernetes", "security", "cks"]
 aliases: ["/kubernetes/Certified-Kubernetes-Security-Specialist-Part-I/"]
 ---
-As I prepare for the **CKS** exam, I will be documenting my notes here (at the high level, I won't deep dive into the topics). This is **part I** of the series. I will be updating this post as I go along.
+These are my notes from prepping for the **CKS** exam, kept high-level rather than exhaustive on every topic. This is **part I** of the series, and I'll keep adding to it as I go.
 
-The CKS exam is a performance-based exam that tests your ability to secure Kubernetes clusters. The exam is 2 hours long and consists of 15-20 questions. The passing score is 66%.
+It's a performance-based exam: 2 hours, 15-20 questions, 66% to pass, and it actually tests whether you can secure a cluster rather than just describe how to.
 
-For those who are interested in taking the exam, you can find more information on the CNCF website:
+More detail lives on the [CNCF website](https://www.cncf.io/certification/cks) if you're weighing whether to take it:
 
 {{< button href="https://www.cncf.io/certification/cks" target="_self" >}}
 CNCF WEBSITE
 {{< /button >}}
 
-If you're looking for a great resource to prepare for the exam, I highly recommend [Kim's course](https://www.youtube.com/watch?v=d9xfB5qaOfg&t=39920s) on Youtube. In addition to **Killercoda** which has a great [scenarios](https://killer.sh/cks) that covers all the topics in the exam.
+For prep, [Kim's course](https://www.youtube.com/watch?v=d9xfB5qaOfg&t=39920s) on YouTube is worth your time, and **Killercoda**'s [CKS scenarios](https://killer.sh/cks) cover the exam's full topic list.
 
 ## Cluster Setup;
 ### GUI Elements;
@@ -28,7 +28,7 @@ If you're looking for a great resource to prepare for the exam, I highly recomme
 - kubectl port-forward;
     - maps the localhostPort to the podPort.
     - `localhost -> kubectl port-forward -> kubectl -> apiserver -> podPort`
-    - Install and expose the kubedashboard exteranlly (not recommended).
+    - Install and expose the kube dashboard externally (not recommended).
     ```shell
     root@localhost:~ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml
     root@localhost:~ k get pod,svc -n kubernetes-dashboard
@@ -42,12 +42,11 @@ If you're looking for a great resource to prepare for the exam, I highly recomme
             image: kubernetesui/dashboard:v2.3.1"
     #Patch the service type to nodePort.
     ```
-⇒ Now you should be able to access to the dashboard.
+⇒ You should now be able to reach the dashboard.
 
 ### Network Policies;
-By default, pods are not isolated and able to communicate with each other.
-Here when NP comes to the place;
-- More like a firewall rules in kubernetes.
+By default, pods aren't isolated at all. Every pod can talk to every other pod. Network Policies are how you fix that:
+- Think of them as firewall rules for Kubernetes.
 - Implemented by CNIs.
 - Namespace-scoped.
 - Allow/Deny (ingress/egress) traffic for pods based on specific criteria.
@@ -149,15 +148,15 @@ EOF
 ```
 
 ### CIS Benchmarks;
-- The CIS (Center for Internet Security) consists of the process and consists of secure configuration guidelines for many platform and systems including (kubernetes).
-- You can either follow the PDF guideline or use download and execte the binary.
-- FOST like kube-bench allows you to scan your kubernetes cluster for any misconfiguration.
+- The CIS (Center for Internet Security) publishes secure configuration guidelines for a long list of platforms and systems, Kubernetes included.
+- Follow the PDF guideline by hand, or download and run the benchmark binary.
+- Tools like kube-bench scan your cluster against those benchmarks and flag any misconfiguration.
 
 ---
 
 ## Cluster Hardening;
 ### Role Based Access Control;
-- RBAC is the use of (Cluster)Roles,(Cluster)RoleBinding and Service Accounts to shape granual access to kubernetes resources.
+- RBAC is the use of (Cluster)Roles, (Cluster)RoleBindings, and Service Accounts to shape granular access to Kubernetes resources.
 - Roles defines the permissions at the namespace level, whereas clusterroles defines the permissions at the cluster level.
 - (Cluster)RoleBinding defines who gets them.
 - Valid combinations
@@ -185,7 +184,7 @@ k auth can-i <verb> <resources> --as <user/sa>
     3. k8s-api signs the csr with ca
     4. crt is then available to download
     
-=> 🔒 The users “client cert” must be signed by the k8s CA, and the username will be whatever under the /CN=*usernmae* part of the cert.
+=> 🔒 The user's "client cert" must be signed by the k8s CA, and the username is whatever sits under the `/CN=*username*` part of the cert.
 
 {{< alert cardColor="#e63946" iconColor="#1d3557" textColor="#f1faee" >}}It is important to know that there is no way to invalidate a cert, once created, stays valid. Hence, if cert is leaked then either remove all access via RBAC, 2/ create new CA and re-issue all certs. {{< /alert >}}
 
@@ -418,6 +417,6 @@ spec:
 status: {}
 ```
 
-Next up, we will be looking at the **Part II** of the series. tackling more advanced topics.
+**Part II** picks up from here with the more advanced topics.
 
 [Continue to Part II →](/posts/cks-part-ii/)
