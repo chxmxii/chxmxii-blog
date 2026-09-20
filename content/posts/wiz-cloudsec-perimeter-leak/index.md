@@ -63,7 +63,7 @@ One entry stands out: a proxy endpoint that takes a `url` parameter.
             },
 ```
 
-Knowing the app runs on EC2, the obvious next move is a GET to the 169.254 metadata server through that proxy. It works — but comes back unauthorized.
+Knowing the app runs on EC2, the obvious next move is a GET to the 169.254 metadata server through that proxy. It works, but comes back unauthorized.
 
 Fine. Ask the metadata server for a temporary token instead:
 
@@ -139,7 +139,7 @@ user@monthly-challenge:~$ aws s3api get-bucket-policy --profile p1 --bucket chal
 }
 ```
 
-That `/proxy` endpoint from `/actuator/mappings` earlier is exactly what's needed here — it lets requests originate from the EC2 instance itself, which sits on that same VPC.
+That `/proxy` endpoint from `/actuator/mappings` earlier is exactly what's needed here: it lets requests originate from the EC2 instance itself, which sits on that same VPC.
 
 So: presign a URL for the object, then fire it through `/proxy` so the request comes from inside the VPC instead of from me. First challenge, flag secured.
 

@@ -13,13 +13,13 @@ Try syncing a Git repo from Azure DevOps into AWX and you'll likely hit the same
 
 ---
 
-The root problem is that AWX doesn't speak the auth flow Microsoft expects. Azure DevOps wants personal access tokens (PATs) sent in an Authorization header, [as documented here](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Linux) — AWX just doesn't do that natively.
+The root problem is that AWX doesn't speak the auth flow Microsoft expects. Azure DevOps wants personal access tokens (PATs) sent in an Authorization header, [as documented here](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Linux). AWX just doesn't do that natively.
 
 SSH keys are the usual workaround people suggest, but that's off the table if SSH access is locked down in your setup, which it is in mine. Building a custom execution environment and baking a Git config file into the container would work too. It's also way more effort than a straightforward auth problem deserves.
 
 ## Solution
 
-Git has a feature most people never touch: injecting config at runtime through environment variables — `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_*`, and `GIT_CONFIG_VALUE_*`. ([Documented here](https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT) if you want the full picture.) That's the way in.
+Git has a feature most people never touch: injecting config at runtime through environment variables, `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_*`, and `GIT_CONFIG_VALUE_*`. ([Documented here](https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT) if you want the full picture.) That's the way in.
 
 All you need to do is pass these as environment variables to the job that performs the project sync. It should look like:
 

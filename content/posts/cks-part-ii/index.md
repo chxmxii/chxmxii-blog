@@ -188,7 +188,7 @@ Secure supply chain helps us ensure that the images, libs, and other dependencie
 - `ImagePolicyWebhook` creates a kind of `ImageReview` which can be assessed by an external tool as part of an admission workflow.
 - You can enable the imagePolicyWebhook via the kube-api manifest;
     - `--enable-admission-plugins=ImagePolicyWebhook`
-    - Create a dir to house all ur admission conf. /etc/kuberentes/admision.
+    - Create a directory to hold the admission config, e.g. `/etc/kubernetes/admission`.
     - `--admission-control-config-file=path-to-admission-config.`
     - add hostPath and **volumeMount** to mount the **admissionDir** so all your config files are available within the container.
     

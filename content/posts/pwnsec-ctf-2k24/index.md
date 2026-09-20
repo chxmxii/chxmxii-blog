@@ -75,7 +75,7 @@ aws list-attached-user-policies --user-name Freya
 ```
 ![error ](image5.png)
 
-No permission to list attached managed policies. Dead end, but not the only door — AWS splits policies into two types: `inline` and `managed`.
+No permission to list attached managed policies. Dead end, but not the only door: AWS splits policies into two types, `inline` and `managed`.
 
 More on the distinction here:
 [Managed policies and inline policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html)
@@ -128,7 +128,7 @@ aws s3 ls s3://midgard55
 #### Part III: Retrieving the second IAM creds from the helm chart;
 ![midgard55 objects](image-3.png)
 
-The policy shows Freya can list *and* get objects in `midgard55`, plus list object versions — which means S3 versioning is on for this bucket. Worth digging through.
+The policy shows Freya can list *and* get objects in `midgard55`, plus list object versions, meaning S3 versioning is on for this bucket. Worth digging through.
 
 The file layout gives it away fast: this is a Helm chart.
 

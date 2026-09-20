@@ -195,7 +195,7 @@ k auth can-i <verb> <resources> --as <user/sa>
 
 ### Restrict API access;
 
-When a request is made to the k8s-api, it goes through the followin;
+When a request is made to the k8s-api, it goes through the following:
 - Who are you? → Authentication
 - What are you allowed to do? → Authorization
 - Admission controller (validating/mutating webhooks)
@@ -203,9 +203,9 @@ These requests are treated as;
 - A normal user
 - A serviceAccount
 - Anonymous access.
-{{< alert cardBackground="trasnparent" textColor="white" >}}
+{{< alert cardBackground="transparent" textColor="white" >}}
 to disable anonymous access, set the `--anonymous-auth`flag to false with the kubelet manifest.
-the `--inescure-port`is set to 0 by defaul, which disables the insecure port. (only bypasses AuthN and AuthZ mods).
+the `--insecure-port` is set to 0 by default, which disables the insecure port. (only bypasses AuthN and AuthZ mods).
 {{< /alert >}}
 
 - Do’s;
@@ -221,11 +221,11 @@ the `--inescure-port`is set to 0 by defaul, which disables the insecure port. (o
 ## Microservices vulnerabilities;
 ### Manage Kubernetes Secrets;
 - **Encrypt ETCD at rest;**
-    - The only compoentn allowed to talk to ETCD is kube-api, hence it is responsible for encrypt/decrypt in this flow.
+    - The only component allowed to talk to ETCD is kube-api, hence it is responsible for encrypt/decrypt in this flow.
     - To enable encryption at rest for a specific resource create a new api object with kind `EncryptionConfiguration.`
     
     ```bash
-    # generate a key using the followin cmd $( head -c 32 /dev/urandom | base64)
+    # generate a key using the following command $( head -c 32 /dev/urandom | base64)
     apiVersion: apiserver.config.k8s.io/v1
     kind: EncryptionConfiguration
     resources:
@@ -267,7 +267,7 @@ if you need to troubleshoot you can go through the logs within the /var/log/pods
 ### Container runtimes sandboxing;
 - Containers are run on a shared kernel, which enables us to execute syscalls (api-like to com w/kernel) that allow us to access other containers.
 - Sandboxes in the security context is an additional layer to ensure isolation.
-- Sandboxes comes at a price (more resc, bad 4 heavy syscalls..).
+- Sandboxes come at a price: more resource overhead, and they're rough on heavy syscall workloads.
 
 #### kata containers;
 
@@ -294,7 +294,7 @@ spec:
 	..
 ```
 ### OS level domains;
-#### Pod Security Contenxt;
+#### Pod Security Context;
 - controls uid,gi at the pod/container level.
 
 ```yaml
@@ -383,7 +383,7 @@ a common approach to solve the problem (when creating a deploy is failed cuz the
 - decouple our app container from the auth/cert workload.
 - all traffic is routed through a proxy/sidecar.
 
-⇒ These routes are creates via `iptable` rules. the sidecar will needs the NET_ADMIN cap.
+⇒ These routes are created via `iptable` rules. the sidecar needs the NET_ADMIN cap.
 
 ```yaml
 apiVersion: v1
