@@ -2,7 +2,7 @@
 title: "Certified Kubernetes Security Specialist PART II"
 date: 2024-09-15
 draft: false
-description: "CKS exam notes, part II — supply chain security, image scanning, runtime monitoring with Falco, auditing, and kernel hardening"
+description: "CKS exam notes, part II: supply chain security, image scanning, runtime monitoring with Falco, auditing, and kernel hardening"
 tags: ["certs", "kubernetes", "security", "cks"]
 aliases: ["/kubernetes/Certified-Kubernetes-Security-Specialist-Part-II/"]
 ---

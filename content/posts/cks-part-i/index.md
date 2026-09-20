@@ -2,7 +2,7 @@
 title: "Certified Kubernetes Security Specialist PART I"
 date: 2024-08-29
 draft: false
-description: "CKS exam notes, part I — cluster setup, network policies, RBAC, secrets encryption, and container runtime sandboxing"
+description: "CKS exam notes, part I: cluster setup, network policies, RBAC, secrets encryption, and container runtime sandboxing"
 tags: ["certs", "kubernetes", "security", "cks"]
 aliases: ["/kubernetes/Certified-Kubernetes-Security-Specialist-Part-I/"]
 ---

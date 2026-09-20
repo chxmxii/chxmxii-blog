@@ -2,7 +2,7 @@
 title: "Red Hat Certified Engineer"
 date: 2023-01-05
 draft: false
-description: "Notes from studying for the RHCE — Ansible-driven RHEL administration, hands-on"
+description: "Notes from studying for the RHCE: hands-on RHEL administration driven by Ansible"
 tags: ["certs", "ansible"]
 aliases: ["/redhat/1733494376968-Red-Hat-Certified-Engineer/"]
 ---

