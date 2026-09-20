@@ -1,24 +1,17 @@
 {{/* Site-wide <head> hook (blowfish's head.html calls this automatically,
   partialCached against .Site so it renders once). Synchronously (before
   first paint - this MUST run inline and unblocked, not deferred) applies
-  the "arriving via portal" classes if the previous page set them before
-  navigating away, so the plain black html::before covers the screen with
-  zero flash of page content. See assets/css/custom.css and
-  layouts/partials/extend-footer.html (the spinning vortex image itself,
-  plus the rest of the transition JS). */}}
+  the "arriving via a glitch" classes if the previous page set them
+  before navigating away, so the glitch overlay covers the screen with
+  zero flash of page content, already mid-glitch. See assets/css/
+  custom.css and layouts/partials/extend-footer.html (the reveal/
+  departure JS). */}}
 <script>
   (function () {
     try {
-      if (sessionStorage.getItem("portalArrive") === "1") {
-        sessionStorage.removeItem("portalArrive");
-        var html = document.documentElement;
-        var x = sessionStorage.getItem("portalX");
-        var y = sessionStorage.getItem("portalY");
-        sessionStorage.removeItem("portalX");
-        sessionStorage.removeItem("portalY");
-        if (x !== null) html.style.setProperty("--portal-x", x + "px");
-        if (y !== null) html.style.setProperty("--portal-y", y + "px");
-        html.classList.add("portal-active", "portal-covering");
+      if (sessionStorage.getItem("glitchArrive") === "1") {
+        sessionStorage.removeItem("glitchArrive");
+        document.documentElement.classList.add("glitch-active", "glitch-peak");
       }
     } catch (e) {}
   })();

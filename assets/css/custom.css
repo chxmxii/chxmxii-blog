@@ -31,83 +31,145 @@
   line-height: 1.3;
 }
 
-/* -- portal (spinning vortex) page transitions --
+/* -- glitch page transitions --
   Classic overlay-based MPA transition (not the CSS View Transitions API -
-  that only cross-fades/clips a snapshot, it can't play a spinning image
-  during the transition). Driven by layouts/partials/extend-head.html
-  (arrival, must be inline/synchronous to avoid a flash of unstyled
-  content) and layouts/partials/extend-footer.html (the spinning image
-  element + departure/reveal JS).
+  that only cross-fades/clips a snapshot, it can't do a jump-cut static/
+  scanline glitch). Driven by layouts/partials/extend-head.html (arrival,
+  must be inline/synchronous to avoid a flash of unstyled content) and
+  layouts/partials/extend-footer.html (departure + reveal JS).
 
-  Two layers share the same clip-path "opening circle" so they read as
-  one portal:
-  - html::before is a plain black pseudo-element - no real DOM node, so
-    it's available instantly (zero flash), before the page has even
-    started rendering <body>.
-  - .portal-vortex-layer is a real element (a pseudo-element can't have
-    an independently-rotating child), parsed near the end of body, so it
-    catches up a few ms after the black layer on arrival - imperceptible,
-    and the black layer means page content never flashes through either
-    way.
+  A single html::before pseudo-element (no real DOM node, so it's
+  available instantly - zero flash, before <body> even starts rendering)
+  layered from scanlines + a generated noise texture (inline SVG
+  feTurbulence data URI - procedural, not a picture of anything), snapped
+  through a short sequence of clip-path/hue-rotate/position states via
+  steps() so it reads as a digital glitch cut rather than an easing
+  animation. glitch-in plays on departure (calm -> full static); the new
+  page starts already at that same full-static state (set synchronously
+  in <head>) and glitch-out plays the reveal (static -> calm, cleared).
 */
 
-:root {
-  --portal-x: 50%;
-  --portal-y: 50%;
-}
-
-html.portal-active::before {
+html.glitch-active::before {
   content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 999998;
-  pointer-events: none;
-  background-color: #000000;
-  clip-path: circle(0% at var(--portal-x) var(--portal-y));
-  transition: clip-path 0.65s cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-html.portal-active.portal-covering::before {
-  clip-path: circle(145% at var(--portal-x) var(--portal-y));
-}
-
-.portal-vortex-layer {
   position: fixed;
   inset: 0;
   z-index: 999999;
   pointer-events: none;
-  overflow: hidden;
-  clip-path: circle(0% at var(--portal-x) var(--portal-y));
-  transition: clip-path 0.65s cubic-bezier(0.65, 0, 0.35, 1);
+  opacity: 0;
+  background-color: #050505;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.06) 0px,
+      rgba(255, 255, 255, 0.06) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:
+    100% 3px,
+    180px 180px;
+  clip-path: inset(0 0 100% 0);
 }
 
-html.portal-covering .portal-vortex-layer {
-  clip-path: circle(145% at var(--portal-x) var(--portal-y));
+html.glitch-active.glitch-in::before {
+  animation: glitch-in 0.32s steps(6, end) both;
 }
 
-.portal-vortex-layer__img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 150vmax;
-  height: 150vmax;
-  object-fit: cover;
-  transform: translate(-50%, -50%) rotate(0deg);
-  animation: portal-spin 16s linear infinite;
+html.glitch-active.glitch-out::before {
+  animation: glitch-out 0.36s steps(6, end) both;
 }
 
-@keyframes portal-spin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
+/* Set synchronously on arrival (see extend-head.html) so the new page
+   starts already fully covered by static, with zero flash - no
+   animation needed for this one, it's just the held end-state of
+   glitch-in until glitch-out takes over a moment later. */
+html.glitch-active.glitch-peak::before {
+  opacity: 1;
+  clip-path: inset(0 0 0 0);
+}
+
+@keyframes glitch-in {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: hue-rotate(0deg) saturate(1) contrast(1);
+    transform: translateX(0);
+  }
+  20% {
+    opacity: 0.9;
+    clip-path: inset(22% 0 52% 0);
+    filter: hue-rotate(110deg) saturate(3) contrast(1.3);
+    transform: translateX(-2.5%);
+  }
+  40% {
+    opacity: 0.7;
+    clip-path: inset(68% 0 4% 0);
+    filter: hue-rotate(-90deg) saturate(2.2) contrast(1.2);
+    transform: translateX(3%);
+  }
+  60% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: hue-rotate(60deg) saturate(4) contrast(1.6);
+    transform: translateX(-1.5%);
+  }
+  80% {
+    opacity: 0.92;
+    clip-path: inset(38% 0 18% 0);
+    filter: hue-rotate(-30deg) saturate(2);
+    transform: translateX(1%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: hue-rotate(0deg) saturate(1) contrast(1);
+    transform: translateX(0);
+  }
+}
+
+@keyframes glitch-out {
+  0% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: hue-rotate(0deg) saturate(1) contrast(1);
+    transform: translateX(0);
+  }
+  20% {
+    opacity: 1;
+    clip-path: inset(48% 0 8% 0);
+    filter: hue-rotate(80deg) saturate(3) contrast(1.4);
+    transform: translateX(2%);
+  }
+  40% {
+    opacity: 0.85;
+    clip-path: inset(4% 0 62% 0);
+    filter: hue-rotate(-100deg) saturate(2.2);
+    transform: translateX(-3%);
+  }
+  60% {
+    opacity: 0.55;
+    clip-path: inset(72% 0 0 0);
+    filter: hue-rotate(50deg) saturate(2);
+    transform: translateX(1.5%);
+  }
+  80% {
+    opacity: 0.28;
+    clip-path: inset(28% 0 42% 0);
+    filter: hue-rotate(0deg) saturate(1);
+    transform: translateX(-0.5%);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: none;
+    transform: translateX(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.portal-active::before,
-  .portal-vortex-layer {
+  html.glitch-active::before {
     transition: none;
-  }
-  .portal-vortex-layer__img {
-    animation: none;
+    animation: none !important;
   }
 }

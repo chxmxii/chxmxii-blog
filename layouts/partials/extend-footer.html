@@ -1,63 +1,38 @@
 {{/* Site-wide end-of-body hook (blowfish's footer.html calls this
-  automatically if it exists). Green portal page transitions: reveals the
-  new page by shrinking the portal overlay away (if we just arrived via
-  one, see extend-head.html), and intercepts internal link clicks to play
-  the "entering the portal" animation before navigating.
-
-  The spinning vortex image lives here (a real <img>, not a CSS
-  background) because only a real element can be independently rotated
-  while a separate clip-path controls the visible "portal opening"
-  shape - a background-image has no rotate-transform of its own. This
-  div is parsed late (end of body), so on arrival the plain black
-  html::before (see custom.css) covers the screen first for a few ms
-  before this catches up - still zero flash of page content, just a
-  briefly imageless black circle. */}}
-{{ with resources.Get "img/portal-vortex.jpg" }}
-  <div class="portal-vortex-layer" aria-hidden="true">
-    <img class="portal-vortex-layer__img" src="{{ .RelPermalink }}" alt="">
-  </div>
-{{ end }}
+  automatically if it exists). Glitch page transitions: reveals the new
+  page by playing the glitch-out cut (if we just arrived via one, see
+  extend-head.html), and intercepts internal link clicks to play the
+  glitch-in cut before navigating. */}}
 <script>
   (function () {
     var html = document.documentElement;
     var reduceMotion =
       window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Each page load is a fresh DOM, so the spin animation would otherwise
-    // restart at 0deg every time - meaning the tail of the departure spin
-    // (old page) and the start of the arrival spin (new page) don't line
-    // up, which reads as the rotation snapping backwards mid-transition.
-    // Phase-lock it to wall-clock time instead, via a negative delay, so
-    // the apparent angle is continuous across the page boundary.
-    var vortexImg = document.querySelector(".portal-vortex-layer__img");
-    if (vortexImg) {
-      var spinPeriod = 16; // must match the animation-duration in custom.css
-      var phase = (Date.now() / 1000) % spinPeriod;
-      vortexImg.style.animationDelay = "-" + phase + "s";
+    function clearGlitch() {
+      html.classList.remove("glitch-active", "glitch-in", "glitch-out", "glitch-peak");
     }
 
-    function clearPortal() {
-      html.classList.remove("portal-active", "portal-covering");
-    }
-
-    // Arrived via a portal jump: the overlay is already fully covering
-    // (set synchronously in <head>) - shrink it away to reveal the page.
-    if (html.classList.contains("portal-covering")) {
+    // Arrived via a glitch jump: the overlay is already fully covering
+    // (set synchronously in <head>, at the glitch-in end-state) - play
+    // the reveal cut to clear it.
+    if (html.classList.contains("glitch-peak")) {
       if (reduceMotion) {
-        clearPortal();
+        clearGlitch();
       } else {
         requestAnimationFrame(function () {
           requestAnimationFrame(function () {
-            html.classList.remove("portal-covering");
+            html.classList.remove("glitch-peak");
+            html.classList.add("glitch-out");
           });
         });
-        html.addEventListener("transitionend", function onEnd(e) {
-          if (e.target === html && e.propertyName === "clip-path") {
-            html.removeEventListener("transitionend", onEnd);
-            clearPortal();
+        html.addEventListener("animationend", function onEnd(e) {
+          if (e.target === html && e.animationName === "glitch-out") {
+            html.removeEventListener("animationend", onEnd);
+            clearGlitch();
           }
         });
-        window.setTimeout(clearPortal, 1200);
+        window.setTimeout(clearGlitch, 900);
       }
     }
 
@@ -83,36 +58,25 @@
 
       e.preventDefault();
 
-      var originX = e.detail === 0 ? window.innerWidth / 2 : e.clientX;
-      var originY = e.detail === 0 ? window.innerHeight / 2 : e.clientY;
-      html.style.setProperty("--portal-x", originX + "px");
-      html.style.setProperty("--portal-y", originY + "px");
-
-      html.classList.add("portal-active");
-      void html.offsetWidth; // force reflow so the 0% state commits first
-      requestAnimationFrame(function () {
-        html.classList.add("portal-covering");
-      });
+      html.classList.add("glitch-active", "glitch-in");
 
       var navigated = false;
       var go = function () {
         if (navigated) return;
         navigated = true;
         try {
-          sessionStorage.setItem("portalArrive", "1");
-          sessionStorage.setItem("portalX", String(originX));
-          sessionStorage.setItem("portalY", String(originY));
+          sessionStorage.setItem("glitchArrive", "1");
         } catch (err) {}
         window.location.href = url.href;
       };
 
-      html.addEventListener("transitionend", function onEnd(ev) {
-        if (ev.target === html && ev.propertyName === "clip-path") {
-          html.removeEventListener("transitionend", onEnd);
+      html.addEventListener("animationend", function onEnd(ev) {
+        if (ev.target === html && ev.animationName === "glitch-in") {
+          html.removeEventListener("animationend", onEnd);
           go();
         }
       });
-      window.setTimeout(go, 750); // safety net
+      window.setTimeout(go, 450); // safety net
     });
   })();
 </script>
